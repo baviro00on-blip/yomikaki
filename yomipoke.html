@@ -1,0 +1,3137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>よみポケ - 漢字を学んでポケモンカードを集めよう！</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap');
+
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 50%, #e0e7ff 100%);
+            color: #1e293b;
+            user-select: none;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 3Dボタン風アニメーション */
+        .btn-3d {
+            transition: all 0.1s ease;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.15);
+        }
+        .btn-3d:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.15);
+        }
+
+        /* カードのホログラム・キラ演出（カード枠内に限定） */
+        .card-foil {
+            position: relative;
+            overflow: hidden;
+        }
+        .card-foil::after {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: -100%;
+            width: 300%;
+            height: 300%;
+            background: linear-gradient(
+                115deg,
+                transparent 25%,
+                rgba(255, 255, 255, 0.6) 45%,
+                rgba(255, 0, 128, 0.4) 50%,
+                rgba(0, 255, 255, 0.4) 55%,
+                transparent 75%
+            );
+            transform: rotate(25deg);
+            pointer-events: none;
+            opacity: 0.7;
+            animation: foilShift 4s infinite linear;
+        }
+
+        @keyframes foilShift {
+            0% { transform: translateY(-30%) rotate(25deg); }
+            100% { transform: translateY(30%) rotate(25deg); }
+        }
+
+        .gold-glow {
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.9), 0 0 5px rgba(255, 255, 255, 0.8), inset 0 0 12px rgba(251, 191, 36, 0.6);
+        }
+
+        .super-glow {
+            box-shadow: 0 0 25px rgba(236, 72, 153, 0.9), 0 0 10px rgba(56, 189, 248, 0.9), inset 0 0 15px rgba(255, 255, 255, 0.8);
+        }
+
+        /* 震えるアニメーション（間違い時） */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* 脈動アニメーション */
+        @keyframes pulse-subtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 2s infinite ease-in-out;
+        }
+
+        /* モンスターボールゲットアニメーション */
+        @keyframes throwBall {
+            0% { transform: translate(0, 0) scale(0.6) rotate(0deg); opacity: 0; }
+            30% { opacity: 1; transform: translate(120px, -45px) scale(1.15) rotate(360deg); }
+            70% { opacity: 1; transform: translate(250px, 20px) scale(1) rotate(720deg); }
+            100% { opacity: 1; transform: translate(250px, 32px) scale(0.95) rotate(720deg); }
+        }
+        .animate-throw-ball {
+            animation: throwBall 0.7s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        @keyframes ballWiggle {
+            0%, 100% { transform: translate(250px, 32px) rotate(0deg); }
+            20% { transform: translate(250px, 32px) rotate(-22deg); }
+            40% { transform: translate(250px, 32px) rotate(22deg); }
+            60% { transform: translate(250px, 32px) rotate(-15deg); }
+            80% { transform: translate(250px, 32px) rotate(15deg); }
+        }
+        .animate-ball-wiggle {
+            animation: ballWiggle 0.6s ease-in-out 3;
+        }
+
+        /* 風で揺れる草むらのアニメーション */
+        @keyframes grassSway {
+            0%, 100% { transform: skewX(0deg); }
+            50% { transform: skewX(-4deg); }
+        }
+        .animate-grass-sway {
+            transform-origin: bottom center;
+            animation: grassSway 2.5s ease-in-out infinite;
+        }
+
+        /* ミサイル飛翔アニメーション */
+        @keyframes flyMissile {
+            0% { transform: translate(0, 0) scale(0.6) rotate(15deg); opacity: 0; }
+            20% { opacity: 1; }
+            80% { transform: translate(180px, -10px) scale(1.1) rotate(5deg); opacity: 1; }
+            100% { transform: translate(210px, 0px) scale(1.2) rotate(0deg); opacity: 0; }
+        }
+        .animate-fly-missile {
+            animation: flyMissile 0.45s ease-in forwards;
+        }
+
+        /* ドット絵キャラクターの小刻みなバトルアニメーション */
+        @keyframes pixelBounce {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-3px); }
+        }
+        .animate-pixel-bounce {
+            animation: pixelBounce 0.4s steps(2) infinite;
+        }
+
+        @keyframes pixelMonster {
+            0%, 100% { transform: translateY(0px) scaleX(1); }
+            50% { transform: translateY(-3px) scaleX(1.02); }
+        }
+        .animate-pixel-monster {
+            animation: pixelMonster 0.5s steps(2) infinite;
+        }
+
+        .pixelated {
+            image-rendering: pixelated;
+        }
+
+        @keyframes rainbowGlow {
+            0% { box-shadow: 0 0 25px #ef4444, inset 0 0 15px #ef4444; }
+            20% { box-shadow: 0 0 25px #f59e0b, inset 0 0 15px #f59e0b; }
+            40% { box-shadow: 0 0 25px #10b981, inset 0 0 15px #10b981; }
+            60% { box-shadow: 0 0 25px #06b6d4, inset 0 0 15px #06b6d4; }
+            80% { box-shadow: 0 0 25px #8b5cf6, inset 0 0 15px #8b5cf6; }
+            100% { box-shadow: 0 0 25px #ec4899, inset 0 0 15px #ec4899; }
+        }
+        .animate-rainbow-glow {
+            animation: rainbowGlow 2s linear infinite;
+        }
+
+        /* カスタムスクロールバー */
+        .scrollbar-none::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-none {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden relative text-slate-800">
+
+    <!-- お祝い用花火・紙吹雪 Canvas -->
+    <canvas id="celebration-canvas" class="pointer-events-none fixed inset-0 z-50 hidden"></canvas>
+
+    <!-- ヘッダーナビゲーション -->
+    <header class="bg-white/95 backdrop-blur border-b border-indigo-100 px-4 py-2.5 shadow-sm shrink-0 z-10">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2.5 cursor-pointer" onclick="showGradeSelect()">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-blue-500 to-amber-400 flex items-center justify-center font-black text-xl shadow-md border-2 border-white text-white">
+                    漢
+                </div>
+                <div>
+                    <h1 class="font-black text-xl sm:text-2xl tracking-wider text-indigo-950 leading-none">よみポケ</h1>
+                    <span class="text-[10px] font-bold text-indigo-500 tracking-wide">漢字でポケモンゲット！</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <button onclick="showAlbum()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3.5 rounded-full border border-indigo-200 flex items-center gap-1.5 shadow-md btn-3d text-xs sm:text-sm">
+                    <i data-lucide="book-open" class="w-4 h-4 text-yellow-300"></i>
+                    <span>カードずかん (<span id="card-count">0/40</span>)</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-4xl w-full mx-auto p-3 flex flex-col justify-between overflow-hidden">
+
+        <!-- 1. 学年・レベル選択画面 -->
+        <section id="stage-select-screen" class="flex flex-col justify-between h-full py-1 space-y-3">
+            <div class="text-center space-y-1">
+                <h2 class="text-xl sm:text-2xl font-black text-indigo-950">学年（がくねん）と レベルをえらぼう！</h2>
+                <p class="text-indigo-600 text-xs sm:text-sm font-bold">10問せいかいで ポケモンカードをゲットできるよ！</p>
+            </div>
+
+            <!-- 学年切り替えタブ (1年生〜6年生) -->
+            <div id="grade-tabs" class="flex justify-center gap-1.5 max-w-xl mx-auto w-full bg-white/80 backdrop-blur p-1.5 rounded-2xl border border-indigo-100 shadow-sm overflow-x-auto scrollbar-none">
+                <!-- JSで動的生成 -->
+            </div>
+
+            <!-- 通知用トーストメッセージ -->
+            <div id="toast-message" class="hidden transition-all duration-300 transform -translate-y-2 opacity-0 bg-slate-900/95 border-2 border-amber-400 text-amber-200 text-xs sm:text-sm font-black px-4 py-2 rounded-full shadow-2xl text-center max-w-sm mx-auto">
+                メッセージ
+            </div>
+
+            <!-- レベルグリッド表示エリア -->
+            <div id="stages-grid-container" class="flex-1 overflow-y-auto max-w-xl mx-auto w-full px-1 py-1 scrollbar-none">
+                <div id="stages-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+                    <!-- JavaScriptでレベルボタンが動的に挿入されます -->
+                </div>
+            </div>
+
+            <div id="stage-footer-tip" class="text-center text-indigo-500 font-bold text-[11px] shrink-0">
+                💡 クリアすると次のレベルがオープン！残りライフが多いほどレアなカードがもらえるよ！
+            </div>
+        </section>
+
+        <!-- 2. ゲーム画面 -->
+        <section id="game-screen" class="hidden flex flex-col justify-between h-full max-w-md mx-auto w-full py-1">
+            <!-- 進行度・ヘッダー情報 -->
+            <div class="w-full bg-white/90 backdrop-blur p-2.5 rounded-2xl border border-indigo-100 flex justify-between items-center shadow-md shrink-0">
+                <div class="flex items-center gap-2">
+                    <span id="current-stage-title" class="text-lg sm:text-xl font-black text-indigo-950">1年生 レベル1</span>
+                    <span id="current-progress-tag" class="text-[11px] bg-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-full font-black">1 / 10問</span>
+                </div>
+                <!-- ライフ表示 -->
+                <div class="flex items-center space-x-1" id="hearts-container">
+                    <i data-lucide="heart" class="w-6 h-6 text-red-500 fill-red-500"></i>
+                    <i data-lucide="heart" class="w-6 h-6 text-red-500 fill-red-500"></i>
+                    <i data-lucide="heart" class="w-6 h-6 text-red-500 fill-red-500"></i>
+                </div>
+            </div>
+
+            <!-- ドット絵バトルエリア（青空と風に揺れる草むら背景） -->
+            <div class="w-full border-4 border-emerald-400/80 rounded-2xl p-2 flex items-center justify-between shrink-0 my-1 relative overflow-hidden h-36 shadow-md bg-gradient-to-b from-sky-300 via-sky-100 to-emerald-200">
+                
+                <!-- 雲アニメーション（背景遠景） -->
+                <div class="absolute top-2 left-6 w-12 h-4 bg-white/80 rounded-full blur-[0.5px]"></div>
+                <div class="absolute top-4 right-12 w-16 h-5 bg-white/70 rounded-full blur-[0.5px]"></div>
+
+                <!-- 風で揺れる草むらレイヤー（下部） -->
+                <div class="absolute bottom-0 inset-x-0 h-10 bg-emerald-500 border-t-2 border-emerald-400 flex items-end justify-around animate-grass-sway overflow-hidden pointer-events-none">
+                    <div class="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[18px] border-b-emerald-600"></div>
+                    <div class="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-b-[24px] border-b-emerald-600"></div>
+                    <div class="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[20px] border-b-emerald-600"></div>
+                    <div class="w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-b-[26px] border-b-emerald-600"></div>
+                    <div class="w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-b-[19px] border-b-emerald-600"></div>
+                </div>
+
+                <!-- 左：ポケモンマスター -->
+                <div class="relative z-20 flex items-center justify-center pl-2">
+                    <div class="w-16 h-16 animate-pixel-bounce flex items-center justify-center filter drop-shadow-md">
+                        <svg class="w-16 h-16 pixelated" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="8" y="2" width="16" height="4" fill="#ef4444"/>
+                            <rect x="6" y="6" width="20" height="2" fill="#ef4444"/>
+                            <rect x="18" y="6" width="8" height="2" fill="#ffffff"/>
+                            <rect x="6" y="8" width="21" height="2" fill="#b91c1c"/>
+                            <rect x="8" y="10" width="14" height="6" fill="#fde047"/>
+                            <rect x="10" y="10" width="12" height="6" fill="#fed7aa"/>
+                            <rect x="18" y="11" width="3" height="1" fill="#1e293b"/>
+                            <rect x="18" y="12" width="2" height="2" fill="#1e293b"/>
+                            <rect x="19" y="12" width="1" height="1" fill="#ffffff"/>
+                            <rect x="8" y="16" width="16" height="10" fill="#2563eb"/>
+                            <rect x="12" y="16" width="8" height="8" fill="#ffffff"/>
+                            <rect x="14" y="16" width="4" height="8" fill="#e0f2fe"/>
+                            <rect x="4" y="17" width="4" height="6" fill="#1d4ed8"/>
+                            <rect x="24" y="17" width="4" height="6" fill="#fed7aa"/>
+                            <rect x="10" y="26" width="4" height="5" fill="#1e293b"/>
+                            <rect x="18" y="26" width="4" height="5" fill="#1e293b"/>
+                            <rect x="8" y="29" width="6" height="2" fill="#ef4444"/>
+                            <rect x="18" y="29" width="6" height="2" fill="#ef4444"/>
+                        </svg>
+                    </div>
+
+                    <!-- 飛んでいくミサイル -->
+                    <div id="missile-anim" class="hidden absolute left-12 top-4 z-30 pointer-events-none">
+                        <svg class="w-8 h-8 pixelated drop-shadow-lg" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="6" width="10" height="4" fill="#f97316"/>
+                            <rect x="12" y="7" width="3" height="2" fill="#ef4444"/>
+                            <rect x="0" y="5" width="3" height="2" fill="#ea580c"/>
+                            <rect x="0" y="9" width="3" height="2" fill="#ea580c"/>
+                            <rect x="4" y="7" width="2" height="2" fill="#fef08a"/>
+                        </svg>
+                    </div>
+
+                    <!-- モンスターボール捕獲用要素 -->
+                    <div id="pokeball-anim" class="hidden absolute left-8 top-4 z-50 pointer-events-none">
+                        <svg class="w-9 h-9 drop-shadow-xl" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="10" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+                            <path d="M2 12 A10 10 0 0 1 22 12 Z" fill="#ef4444"/>
+                            <line x1="2" y1="12" x2="22" y2="12" stroke="#0f172a" stroke-width="2"/>
+                            <circle cx="12" cy="12" r="3.5" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+                            <circle cx="12" cy="12" r="1.5" fill="#0f172a"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- 右：野生のドット絵怪獣 -->
+                <div id="wild-pokemon-container" class="relative z-10 flex flex-col items-center justify-center w-36 h-32 pr-2 overflow-visible">
+                    <div id="target-pokemon-scale-box" class="transition-all duration-500 origin-center flex flex-col items-center scale-[1.8]">
+                        <div class="animate-pixel-monster flex flex-col items-center">
+                            <div id="pixel-monster-svg-box" class="w-16 h-16 filter drop-shadow-xl flex items-center justify-center">
+                                <!-- JSで生成されるドット絵 -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="hit-explosion" class="hidden absolute z-30 pointer-events-none">
+                        <div class="text-3xl animate-ping">💥</div>
+                    </div>
+
+                    <div id="capture-stars" class="hidden absolute z-40 pointer-events-none text-2xl font-black text-amber-500 animate-bounce drop-shadow-md">
+                        ✨ GET! ✨
+                    </div>
+                </div>
+            </div>
+
+            <!-- 問題表示エリア -->
+            <div class="w-full shrink-0 my-2">
+                <div class="w-full h-36 rounded-2xl bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-100 border-4 border-amber-300 shadow-md flex flex-col items-center justify-center p-3 text-slate-900 animate-pulse-subtle">
+                    <div id="question-prompt" class="text-xs sm:text-sm font-bold text-amber-900 bg-amber-200/80 px-3.5 py-0.5 rounded-full border border-amber-300">
+                        「言葉」の よみをえらぼう！
+                    </div>
+                    <div id="question-phrase-container" class="text-3xl sm:text-4xl font-black tracking-widest text-slate-900 my-1 drop-shadow-sm flex items-center justify-center gap-1">
+                        <!-- JSで熟語・訓読み文字列全体を表示 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 選択肢 4択 -->
+            <div class="w-full shrink-0 my-2">
+                <div id="options-grid" class="grid grid-cols-2 gap-3 w-full">
+                    <!-- 動的に生成 -->
+                </div>
+            </div>
+
+            <div class="text-center text-indigo-500 font-bold text-[12px] shrink-0">
+                正しい ひらがなの読みを選んでね！
+            </div>
+        </section>
+
+        <!-- 3. クリア演出画面 -->
+        <section id="clear-screen" class="hidden flex flex-col justify-center items-center h-full max-w-md mx-auto w-full py-2 relative z-40">
+            <div id="clear-modal-box" class="bg-white/95 border-2 border-indigo-200 rounded-3xl p-5 shadow-2xl w-full text-center space-y-4 relative overflow-hidden backdrop-blur">
+                <div class="space-y-1">
+                    <div id="clear-badge" class="inline-block px-4 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-900 shadow">
+                        GOLD CLEAR!
+                    </div>
+                    <h2 id="clear-title" class="text-2xl font-black text-indigo-950 drop-shadow-sm">1年生 レベル1 クリア！</h2>
+                    <p id="clear-subtitle" class="text-indigo-600 font-bold text-xs sm:text-sm">ポケモンカードを ゲットしたよ！</p>
+                    
+                    <div id="world-clear-banner" class="hidden my-2 py-2 px-3 bg-gradient-to-r from-amber-400 via-rose-500 to-purple-600 text-white font-black text-sm rounded-xl shadow-lg border-2 border-white animate-bounce">
+                        🎉 カード図鑑 60種コンプリート！！ 🎉
+                    </div>
+                </div>
+
+                <!-- 獲得カードプレビュー -->
+                <div class="flex justify-center py-1">
+                    <div id="reward-card-container" class="transform hover:scale-105 transition-transform duration-300 cursor-pointer">
+                        <!-- カードDOM -->
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-1">
+                    <button id="next-btn" onclick="handleNextStep()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-lg font-black rounded-xl shadow-lg btn-3d border border-white/20 flex items-center justify-center gap-2">
+                        <span>つぎのレベルへ</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="startLevel(currentGrade, currentLevel)" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-black text-base rounded-xl shadow-md btn-3d border border-white/20 flex items-center justify-center gap-2">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        <span>もう１かいする</span>
+                    </button>
+                    <button onclick="showGradeSelect()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-md btn-3d border border-white/20 flex items-center justify-center gap-2 text-sm">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        <span>メニューに戻る</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. アルバム（カード図鑑）画面 -->
+        <section id="album-screen" class="hidden flex flex-col h-full space-y-2 overflow-hidden">
+            <div class="flex justify-between items-center border-b border-indigo-100 pb-2 shrink-0">
+                <div>
+                    <h2 class="text-lg sm:text-xl font-black text-indigo-950 flex items-center gap-1.5">
+                        <i data-lucide="award" class="w-6 h-6 text-yellow-500"></i> ポケモンカードずかん
+                    </h2>
+                    <p class="text-indigo-600 font-bold text-xs">ゲットしたカードをタップして大きくみられるよ！</p>
+                </div>
+                <button onclick="showGradeSelect()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs btn-3d">
+                    もどる
+                </button>
+            </div>
+
+            <!-- レア度別フィルターボタンバー (横スクロール対応) -->
+            <div id="album-filter-bar" class="flex gap-1.5 overflow-x-auto pb-1.5 shrink-0 scrollbar-none">
+                <!-- JSで動的生成 -->
+            </div>
+
+            <!-- カードグリッド -->
+            <div id="album-grid" class="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-1">
+                <!-- 動的に生成 -->
+            </div>
+        </section>
+
+        <!-- 5. カード拡大モーダル -->
+        <div id="card-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4" onclick="closeCardModal()">
+            <div class="relative transform scale-125 sm:scale-150 transition-transform duration-300" onclick="event.stopPropagation()">
+                <div id="modal-card-container"></div>
+            </div>
+            <button onclick="closeCardModal()" class="mt-12 bg-white/20 hover:bg-white/30 text-white font-black px-6 py-2 rounded-full border border-white/40 text-sm shadow-xl backdrop-blur-md">
+                とじる
+            </button>
+        </div>
+
+        <!-- ゲームオーバーモーダル -->
+        <div id="gameover-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white border-2 border-red-400 rounded-3xl p-5 max-w-sm w-full text-center space-y-4 shadow-2xl">
+                <div class="w-14 h-14 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto border border-red-200">
+                    <i data-lucide="heart-off" class="w-8 h-8"></i>
+                </div>
+                <div class="space-y-1">
+                    <h3 class="text-xl font-black text-slate-900">ざんねん！ライフがなくなったよ</h3>
+                    <p class="text-slate-600 font-bold text-xs">もういちど 挑戦して クリアを目指そう！</p>
+                </div>
+                <button onclick="retryCurrentStage()" class="w-full py-3 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-400 hover:to-rose-500 text-white font-black text-base rounded-xl shadow-lg btn-3d">
+                    もう一回する
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- JavaScript ロジック -->
+    <script>
+        // --- 1. 定数とデータ定義 ---
+
+        const SAVE_KEY = 'yomipoke_pokemon_save_v2';
+
+        // 各学年の新出漢字数とレベル数 (1レベル＝10問)
+        // 1年: 80字(8L), 2年: 160字(16L), 3年: 200字(20L), 4年: 202字(21L), 5年: 193字(20L), 6年: 191字(20L)
+        const GRADE_LEVEL_COUNTS = { 1: 8, 2: 16, 3: 20, 4: 21, 5: 20, 6: 20 };
+
+        // レア度9段階定義
+        const RARITY_ORDER = ['C', 'U', 'R', 'RR', 'AR', 'SR', 'SAR', 'UR', 'MUR'];
+
+        // レア度別出現ウェイト
+        const RARITY_WEIGHTS = {
+            'C': 100, 'U': 60, 'R': 30, 'RR': 15,
+            'AR': 50, 'SR': 25, 'SAR': 12, 'UR': 5, 'MUR': 1
+        };
+
+        function pickWeightedCard(cardArray) {
+            if (!cardArray || cardArray.length === 0) return POKEMON_CARDS[0];
+            const weights = cardArray.map(c => RARITY_WEIGHTS[c.rarity] || 10);
+            const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+            let random = Math.random() * totalWeight;
+            for (let i = 0; i < cardArray.length; i++) {
+                if (random < weights[i]) return cardArray[i];
+                random -= weights[i];
+            }
+            return cardArray[0];
+        }
+
+        // 60種類のポケモンカードデータ
+        const POKEMON_CARDS = [
+            // C (10枚)
+            { id: 'p1', name: 'キャタピー', hp: 50, type: '草', typeBg: 'bg-lime-500 text-slate-900', rarity: 'C', attack: 'いとをはく', damage: '10', cost: '🍃', theme: 'grass', bgTone: 'from-emerald-950 via-lime-950 to-slate-950', accentColor: '#84cc16', scale: 0.8 },
+            { id: 'p2', name: 'コラッタ', hp: 40, type: '無', typeBg: 'bg-amber-300 text-slate-900', rarity: 'C', attack: 'かみつく', damage: '20', cost: '⚪', theme: 'normal', bgTone: 'from-amber-950 via-amber-900 to-slate-950', accentColor: '#d97706', scale: 0.8 },
+            { id: 'p3', name: 'ポッポ', hp: 50, type: '無', typeBg: 'bg-amber-300 text-slate-900', rarity: 'C', attack: 'かぜおこし', damage: '20', cost: '⚪', theme: 'normal', bgTone: 'from-amber-950 via-slate-950 to-slate-950', accentColor: '#f59e0b', scale: 0.85 },
+            { id: 'p4', name: 'ニャース', hp: 60, type: '無', typeBg: 'bg-yellow-300 text-slate-900', rarity: 'C', attack: 'ねこにこばん', damage: '20', cost: '⚪', theme: 'normal', bgTone: 'from-yellow-950 via-amber-900 to-slate-950', accentColor: '#f59e0b', scale: 0.9 },
+            { id: 'p5', name: 'コダック', hp: 70, type: '水', typeBg: 'bg-sky-400 text-slate-900', rarity: 'C', attack: 'みずでっぽう', damage: '20', cost: '💧', theme: 'water', bgTone: 'from-blue-950 via-sky-950 to-slate-950', accentColor: '#38bdf8', scale: 0.9 },
+            { id: 'p6', name: 'ピチュー', hp: 50, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'C', attack: 'パチパチ', damage: '20', cost: '⚡', theme: 'lightning', bgTone: 'from-amber-950 via-yellow-900 to-slate-950', accentColor: '#eab308', scale: 0.8 },
+            { id: 'p7', name: 'パモ', hp: 60, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'C', attack: 'でんきショック', damage: '30', cost: '⚡', theme: 'lightning', bgTone: 'from-orange-950 via-amber-900 to-slate-950', accentColor: '#f97316', scale: 0.85 },
+            { id: 'p8', name: 'モクロー', hp: 60, type: '草', typeBg: 'bg-lime-500 text-slate-900', rarity: 'C', attack: 'つつく', damage: '20', cost: '🍃', theme: 'grass', bgTone: 'from-emerald-950 via-lime-950 to-slate-950', accentColor: '#84cc16', scale: 0.85 },
+            { id: 'p9', name: 'イーブイ', hp: 70, type: '無', typeBg: 'bg-amber-300 text-slate-900', rarity: 'C', attack: 'たいあたり', damage: '20', cost: '⚪', theme: 'normal', bgTone: 'from-amber-950 via-amber-900 to-slate-950', accentColor: '#d97706', scale: 0.9 },
+            { id: 'p10', name: 'トゲピー', hp: 50, type: '超', typeBg: 'bg-pink-400 text-white', rarity: 'C', attack: 'ゆびをふる', damage: '30', cost: '🔮', theme: 'psychic', bgTone: 'from-pink-950 via-rose-950 to-slate-950', accentColor: '#f43f5e', scale: 0.8 },
+
+            // U (10枚)
+            { id: 'p11', name: 'ピカチュウ', hp: 70, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'U', attack: 'エレキボール', damage: '40', cost: '⚡⚪', theme: 'lightning', bgTone: 'from-yellow-950 via-amber-900 to-slate-950', accentColor: '#facc15', scale: 0.95 },
+            { id: 'p12', name: 'フシギダネ', hp: 70, type: '草', typeBg: 'bg-emerald-500 text-white', rarity: 'U', attack: 'つるのムチ', damage: '30', cost: '🍃', theme: 'grass', bgTone: 'from-emerald-950 via-teal-950 to-slate-950', accentColor: '#059669', scale: 0.9 },
+            { id: 'p13', name: 'ヒトカゲ', hp: 70, type: '炎', typeBg: 'bg-orange-500 text-white', rarity: 'U', attack: 'ひのこ', damage: '30', cost: '🔥', theme: 'fire', bgTone: 'from-red-950 via-rose-900 to-slate-950', accentColor: '#ea580c', scale: 0.9 },
+            { id: 'p14', name: 'ゼニガメ', hp: 70, type: '水', typeBg: 'bg-blue-500 text-white', rarity: 'U', attack: 'みずでっぽう', damage: '30', cost: '💧', theme: 'water', bgTone: 'from-blue-950 via-indigo-950 to-slate-950', accentColor: '#2563eb', scale: 0.9 },
+            { id: 'p15', name: 'ポッチャマ', hp: 70, type: '水', typeBg: 'bg-sky-400 text-slate-900', rarity: 'U', attack: 'バブルこうせん', damage: '40', cost: '💧', theme: 'water', bgTone: 'from-cyan-950 via-sky-900 to-slate-950', accentColor: '#0284c7', scale: 0.9 },
+            { id: 'p16', name: 'シャワーズ', hp: 110, type: '水', typeBg: 'bg-sky-400 text-slate-900', rarity: 'U', attack: 'みずのしたどう', damage: '60', cost: '💧⚪', theme: 'water', bgTone: 'from-teal-950 via-blue-950 to-slate-950', accentColor: '#06b6d4', scale: 1.0 },
+            { id: 'p17', name: 'サンダース', hp: 110, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'U', attack: 'ピンミサイル', damage: '60', cost: '⚡⚪', theme: 'lightning', bgTone: 'from-amber-950 via-yellow-900 to-slate-950', accentColor: '#eab308', scale: 1.0 },
+            { id: 'p18', name: 'ブースター', hp: 120, type: '炎', typeBg: 'bg-orange-500 text-white', rarity: 'U', attack: 'かえんほうしゃ', damage: '70', cost: '🔥🔥', theme: 'fire', bgTone: 'from-red-950 via-orange-950 to-slate-950', accentColor: '#ea580c', scale: 1.0 },
+            { id: 'p19', name: 'プリン', hp: 60, type: '無', typeBg: 'bg-pink-300 text-slate-900', rarity: 'U', attack: 'うたう', damage: '20', cost: '⚪', theme: 'normal', bgTone: 'from-pink-950 via-rose-950 to-slate-950', accentColor: '#f43f5e', scale: 0.9 },
+            { id: 'p20', name: 'ケーシィ', hp: 60, type: '超', typeBg: 'bg-purple-500 text-white', rarity: 'U', attack: 'テレポート', damage: '20', cost: '🔮', theme: 'psychic', bgTone: 'from-purple-950 via-indigo-950 to-slate-950', accentColor: '#a855f7', scale: 0.85 },
+
+            // R (10枚)
+            { id: 'p21', name: 'ライチュウ', hp: 120, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'R', attack: '10まんボルト', damage: '90', cost: '⚡⚡⚪', theme: 'lightning', bgTone: 'from-yellow-950 via-amber-900 to-slate-950', accentColor: '#facc15', scale: 1.0 },
+            { id: 'p22', name: 'ピッピ', hp: 60, type: '超', typeBg: 'bg-pink-300 text-slate-900', rarity: 'R', attack: 'ムーンフォース', damage: '50', cost: '🔮⚪', theme: 'psychic', bgTone: 'from-pink-950 via-fuchsia-950 to-slate-950', accentColor: '#ec4899', scale: 0.9 },
+            { id: 'p23', name: 'メノクラゲ', hp: 80, type: '水', typeBg: 'bg-blue-600 text-white', rarity: 'R', attack: 'どくばり', damage: '40', cost: '💧', theme: 'water', bgTone: 'from-cyan-950 via-blue-950 to-slate-950', accentColor: '#0284c7', scale: 0.9 },
+            { id: 'p24', name: 'ギャラドス', hp: 180, type: '水', typeBg: 'bg-blue-600 text-white', rarity: 'R', attack: 'ハイパーボイス', damage: '120', cost: '💧💧⚪⚪', theme: 'water', bgTone: 'from-blue-950 via-indigo-950 to-slate-950', accentColor: '#1d4ed8', scale: 1.2 },
+            { id: 'p25', name: 'ラプラス', hp: 130, type: '水', typeBg: 'bg-sky-500 text-white', rarity: 'R', attack: 'なみのり', damage: '90', cost: '💧💧⚪', theme: 'water', bgTone: 'from-sky-950 via-cyan-950 to-slate-950', accentColor: '#0284c7', scale: 1.1 },
+            { id: 'p26', name: 'ロコン', hp: 60, type: '炎', typeBg: 'bg-orange-500 text-white', rarity: 'R', attack: 'きつねび', damage: '30', cost: '🔥', theme: 'fire', bgTone: 'from-orange-950 via-red-950 to-slate-950', accentColor: '#f97316', scale: 0.85 },
+            { id: 'p27', name: 'ガーディ', hp: 80, type: '炎', typeBg: 'bg-orange-500 text-white', rarity: 'R', attack: 'かみつくだく', damage: '50', cost: '🔥⚪', theme: 'fire', bgTone: 'from-amber-950 via-orange-950 to-slate-950', accentColor: '#ea580c', scale: 0.95 },
+            { id: 'p28', name: 'パルシェン', hp: 130, type: '水', typeBg: 'bg-indigo-600 text-white', rarity: 'R', attack: 'つららばり', damage: '80', cost: '💧💧', theme: 'water', bgTone: 'from-slate-950 via-indigo-950 to-slate-950', accentColor: '#4f46e5', scale: 1.05 },
+            { id: 'p29', name: 'ストライク', hp: 90, type: '草', typeBg: 'bg-emerald-500 text-white', rarity: 'R', attack: 'れんぞくぎり', damage: '60', cost: '🍃⚪', theme: 'grass', bgTone: 'from-emerald-950 via-lime-950 to-slate-950', accentColor: '#10b981', scale: 1.0 },
+            { id: 'p30', name: 'エレブー', hp: 90, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'R', attack: 'かみなりパンチ', damage: '70', cost: '⚡⚡', theme: 'lightning', bgTone: 'from-yellow-950 via-amber-900 to-slate-950', accentColor: '#eab308', scale: 1.0 },
+
+            // RR (10枚)
+            { id: 'p31', name: 'ピカチュウ ex', hp: 200, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'RR', attack: '10万ボルト', damage: '120', cost: '⚡⚡', theme: 'lightning', bgTone: 'from-yellow-950 via-amber-900 to-slate-950', accentColor: '#facc15', scale: 1.05 },
+            { id: 'p32', name: 'リザードン ex', hp: 330, type: '炎', typeBg: 'bg-orange-500 text-white', rarity: 'RR', attack: 'れんごくしはい', damage: '180', cost: '🔥🔥', theme: 'fire', bgTone: 'from-red-950 via-rose-900 to-slate-950', accentColor: '#ea580c', scale: 1.15 },
+            { id: 'p33', name: 'カメックス ex', hp: 330, type: '水', typeBg: 'bg-blue-500 text-white', rarity: 'RR', attack: 'ハイドロボム', damage: '160', cost: '💧💧', theme: 'water', bgTone: 'from-blue-950 via-indigo-950 to-slate-950', accentColor: '#2563eb', scale: 1.15 },
+            { id: 'p34', name: 'フシギバナ ex', hp: 340, type: '草', typeBg: 'bg-emerald-500 text-white', rarity: 'RR', attack: 'ジャイアントブルーム', damage: '150', cost: '🍃🍃', theme: 'grass', bgTone: 'from-emerald-950 via-teal-950 to-slate-950', accentColor: '#059669', scale: 1.15 },
+            { id: 'p35', name: 'ミュウツー ex', hp: 310, type: '超', typeBg: 'bg-purple-600 text-white', rarity: 'RR', attack: 'サイコドライブ', damage: '220', cost: '🔮🔮', theme: 'psychic', bgTone: 'from-purple-950 via-fuchsia-950 to-slate-950', accentColor: '#9333ea', scale: 1.1 },
+            { id: 'p36', name: 'ゲッコウガ ex', hp: 300, type: '水', typeBg: 'bg-blue-600 text-white', rarity: 'RR', attack: 'しのびの手裏剣', damage: '170', cost: '💧⚪', theme: 'water', bgTone: 'from-indigo-950 via-blue-950 to-slate-950', accentColor: '#2563eb', scale: 1.1 },
+            { id: 'p37', name: 'ルカリオ ex', hp: 280, type: '闘', typeBg: 'bg-amber-700 text-white', rarity: 'RR', attack: '波動ブラスト', damage: '160', cost: '🥊🥊', theme: 'fight', bgTone: 'from-cyan-950 via-slate-900 to-slate-950', accentColor: '#0284c7', scale: 1.05 },
+            { id: 'p38', name: 'サーナイト ex', hp: 310, type: '超', typeBg: 'bg-pink-500 text-white', rarity: 'RR', attack: 'サイコエンブレイス', damage: '190', cost: '🔮🔮', theme: 'psychic', bgTone: 'from-fuchsia-950 via-pink-950 to-slate-950', accentColor: '#ec4899', scale: 1.05 },
+            { id: 'p39', name: 'ゲンガー ex', hp: 300, type: '超', typeBg: 'bg-indigo-900 text-white', rarity: 'RR', attack: 'ナイトゲイズ', damage: '180', cost: '🔮🔮', theme: 'psychic', bgTone: 'from-purple-950 via-indigo-950 to-slate-950', accentColor: '#7e22ce', scale: 1.1 },
+            { id: 'p40', name: 'カイリュー ex', hp: 330, type: 'ドラゴン', typeBg: 'bg-amber-600 text-white', rarity: 'RR', attack: '流星群ブレイク', damage: '230', cost: '🔥💧⚪', theme: 'dragon', bgTone: 'from-amber-950 via-orange-950 to-slate-950', accentColor: '#f59e0b', scale: 1.2 },
+
+            // AR (6枚)
+            { id: 'p41', name: 'カビゴン AR', hp: 150, type: '無', typeBg: 'bg-teal-800 text-white', rarity: 'AR', attack: 'とおせんぼ', damage: '100', cost: '⚪⚪⚪', theme: 'normal', bgTone: 'from-teal-950 via-emerald-950 to-slate-950', accentColor: '#0d9488', scale: 1.25 },
+            { id: 'p42', name: 'ナンジャモのハラバリー AR', hp: 140, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'AR', attack: 'エレキチャージ', damage: '110', cost: '⚡⚡', theme: 'lightning', bgTone: 'from-amber-950 via-yellow-900 to-slate-950', accentColor: '#eab308', scale: 1.2 },
+            { id: 'p43', name: 'ポッチャマ AR', hp: 80, type: '水', typeBg: 'bg-sky-400 text-slate-900', rarity: 'AR', attack: 'みずたまりダイブ', damage: '60', cost: '💧', theme: 'water', bgTone: 'from-cyan-950 via-sky-900 to-slate-950', accentColor: '#0284c7', scale: 1.15 },
+            { id: 'p44', name: 'イーブイ AR', hp: 80, type: '無', typeBg: 'bg-amber-300 text-slate-900', rarity: 'AR', attack: 'フレンズハート', damage: '50', cost: '⚪', theme: 'normal', bgTone: 'from-amber-950 via-rose-950 to-slate-950', accentColor: '#d97706', scale: 1.15 },
+            { id: 'p45', name: 'デデンネ AR', hp: 70, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'AR', attack: 'ほっぺすりすり', damage: '40', cost: '⚡', theme: 'lightning', bgTone: 'from-amber-950 via-yellow-950 to-slate-950', accentColor: '#fbbf24', scale: 1.1 },
+            { id: 'p46', name: 'モクロー AR', hp: 70, type: '草', typeBg: 'bg-lime-500 text-slate-900', rarity: 'AR', attack: 'このはストーム', damage: '50', cost: '🍃', theme: 'grass', bgTone: 'from-emerald-950 via-teal-950 to-slate-950', accentColor: '#84cc16', scale: 1.1 },
+
+            // SR (6枚)
+            { id: 'p47', name: 'レックウザ ex SR', hp: 230, type: 'ドラゴン', typeBg: 'bg-teal-700 text-white', rarity: 'SR', attack: 'ドラゴンバースト', damage: '210', cost: '⚡🔥', theme: 'dragon', bgTone: 'from-teal-950 via-emerald-950 to-slate-950', accentColor: '#0d9488', scale: 1.25 },
+            { id: 'p48', name: 'ミュウ ex SR', hp: 180, type: '超', typeBg: 'bg-pink-400 text-white', rarity: 'SR', attack: 'ゲノムハック', damage: '150', cost: '⚪⚪⚪', theme: 'psychic', bgTone: 'from-pink-950 via-rose-950 to-slate-950', accentColor: '#f43f5e', scale: 1.1 },
+            { id: 'p49', name: 'フリーザー ex SR', hp: 220, type: '水', typeBg: 'bg-sky-400 text-slate-900', rarity: 'SR', attack: 'アイスフザード', damage: '170', cost: '💧💧', theme: 'water', bgTone: 'from-sky-950 via-cyan-950 to-slate-950', accentColor: '#38bdf8', scale: 1.2 },
+            { id: 'p50', name: 'サンダー ex SR', hp: 220, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'SR', attack: 'ライトニングボルト', damage: '180', cost: '⚡⚡', theme: 'lightning', bgTone: 'from-yellow-950 via-amber-950 to-slate-950', accentColor: '#eab308', scale: 1.2 },
+            { id: 'p51', name: 'ファイヤー ex SR', hp: 220, type: '炎', typeBg: 'bg-orange-500 text-white', rarity: 'SR', attack: 'バーニングウィング', damage: '180', cost: '🔥🔥', theme: 'fire', bgTone: 'from-red-950 via-orange-950 to-slate-950', accentColor: '#f97316', scale: 1.2 },
+            { id: 'p52', name: 'ハッサム ex SR', hp: 270, type: '鋼', typeBg: 'bg-slate-600 text-white', rarity: 'SR', attack: 'レッドスライサー', damage: '200', cost: '⚪⚪⚪', theme: 'normal', bgTone: 'from-rose-950 via-red-950 to-slate-950', accentColor: '#dc2626', scale: 1.2 },
+
+            // SAR (4枚)
+            { id: 'p53', name: 'アルセウス ex SAR', hp: 300, type: '無', typeBg: 'bg-amber-200 text-slate-900', rarity: 'SAR', attack: '神話の輝き', damage: '250', cost: '⚪⚪⚪', theme: 'legend', bgTone: 'from-amber-950 via-yellow-900 to-slate-950', accentColor: '#fde047', scale: 1.3 },
+            { id: 'p54', name: 'ミライドン ex SAR', hp: 230, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'SAR', attack: 'サイバーボルト', damage: '240', cost: '⚡⚡', theme: 'lightning', bgTone: 'from-violet-950 via-purple-950 to-slate-950', accentColor: '#a855f7', scale: 1.25 },
+            { id: 'p55', name: 'コライドン ex SAR', hp: 230, type: '闘', typeBg: 'bg-red-700 text-white', rarity: 'SAR', attack: 'プライマルインパクト', damage: '240', cost: '🥊🥊', theme: 'fight', bgTone: 'from-rose-950 via-red-950 to-slate-950', accentColor: '#e11d48', scale: 1.25 },
+            { id: 'p56', name: 'ギラティナ ex SAR', hp: 280, type: 'ドラゴン', typeBg: 'bg-purple-900 text-white', rarity: 'SAR', attack: '次元崩壊インパクト', damage: '280', cost: '🔮🍃', theme: 'legend', bgTone: 'from-slate-950 via-purple-950 to-slate-950', accentColor: '#7e22ce', scale: 1.3 },
+
+            // UR (2枚)
+            { id: 'p57', name: 'ルギア ex UR', hp: 280, type: '無', typeBg: 'bg-slate-200 text-slate-900', rarity: 'UR', attack: '黄金のエアロブラスト', damage: '260', cost: '⚪⚪⚪⚪', theme: 'legend', bgTone: 'from-amber-950 via-yellow-950 to-slate-950', accentColor: '#eab308', scale: 1.3 },
+            { id: 'p58', name: 'カイオーガ ex UR', hp: 280, type: '水', typeBg: 'bg-blue-600 text-white', rarity: 'UR', attack: '黄金の大海津波', damage: '260', cost: '💧💧💧', theme: 'water', bgTone: 'from-amber-950 via-blue-950 to-slate-950', accentColor: '#eab308', scale: 1.3 },
+
+            // MUR (2枚)
+            { id: 'p59', name: 'ピカチュウ MUR', hp: 350, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'MUR', attack: 'メガ・ギガ100万ボルト', damage: '300', cost: '⚡⚡⚡', theme: 'lightning', bgTone: 'from-yellow-950 via-amber-900 to-slate-950', accentColor: '#facc15', scale: 1.35 },
+            { id: 'p60', name: 'アルセウス MUR', hp: 380, type: '無', typeBg: 'bg-amber-200 text-slate-900', rarity: 'MUR', attack: '全知全能創世光芒', damage: '320', cost: '⚪⚪⚪⚪', theme: 'legend', bgTone: 'from-amber-950 via-yellow-900 to-slate-950', accentColor: '#fde047', scale: 1.35 }
+        ];
+
+        // --- 2. 漢字学習問題マスターデータベース (学年別) ---
+        // 各学年の全レベル（1年:8L, 2年:16L, 3年:20L, 4年:21L, 5年:20L, 6年:20L）に対応した完全独立問題DB（計1,050問）
+
+        const KANJI_DB = {
+            1: [
+                // Lv.1 (1~10)
+                { phrase: '一日', ans: 'ついたち', d: ['ふつか', 'みっか', 'よっか'] },
+                { phrase: '右手', ans: 'みぎて', d: ['ひだりて', 'りょうて', 'あして'] },
+                { phrase: '大雨', ans: 'おおあめ', d: ['こあめ', 'きりあめ', 'にわかあめ'] },
+                { phrase: '百円', ans: 'ひゃくえん', d: ['じゅうえん', 'せんえん', 'ごじゅうえん'] },
+                { phrase: '王さま', ans: 'おうさま', d: ['かみさま', 'おれさま', 'とのさま'] },
+                { phrase: '足音', ans: 'あしおと', d: ['ものおと', 'はねおと', 'あまおと'] },
+                { phrase: '川しも', ans: 'かわしも', d: ['かわかみ', 'かわぐち', 'かわぞい'] },
+                { phrase: '花火', ans: 'はなび', d: ['たきび', 'ともしび', 'ひばな'] },
+                { phrase: '赤貝', ans: 'あかがい', d: ['あおがい', 'しろがい', 'くろがい'] },
+                { phrase: '学校', ans: 'がっこう', d: ['きょうしつ', 'こうちょう', 'こうもん'] },
+
+                // Lv.2 (11~20)
+                { phrase: '天気', ans: 'てんき', d: ['きこう', 'くもり', 'あめふり'] },
+                { phrase: '九日', ans: 'ここのか', d: ['いつか', 'なのか', 'ようか'] },
+                { phrase: '休日', ans: 'きゅうじつ', d: ['へいじつ', 'しゅくじつ', 'らいしゅう'] },
+                { phrase: '水玉', ans: 'みずたま', d: ['あめたま', 'どろたま', 'ひかりたま'] },
+                { phrase: '金色', ans: 'きんいろ', d: ['ぎんいろ', 'あかいろ', 'あおいろ'] },
+                { phrase: '青空', ans: 'あおぞら', d: ['ゆうぞら', 'よぞら', 'ほしぞら'] },
+                { phrase: '月日', ans: 'つきひ', d: ['ねんげつ', 'ひにち', 'ねんちゅう'] },
+                { phrase: '子犬', ans: 'こいぬ', d: ['おやいぬ', 'のいぬ', 'あいけん'] },
+                { phrase: '見学', ans: 'けんがく', d: ['けんぶつ', 'たいけん', 'さんか'] },
+                { phrase: '五日', ans: 'いつか', d: ['ふつか', 'みっか', 'よっか'] },
+
+                // Lv.3 (21~30)
+                { phrase: '出口', ans: 'でぐち', d: ['いりぐち', 'かいさつ', 'ひじょうぐち'] },
+                { phrase: '校木', ans: 'こうぼく', d: ['こうか', 'こうしょう', 'こうたい'] },
+                { phrase: '左手', ans: 'ひだりて', d: ['みぎて', 'りょうて', 'あして'] },
+                { phrase: '三日', ans: 'みっか', d: ['ふつか', 'よっか', 'いつか'] },
+                { phrase: '火山', ans: 'かざん', d: ['こうざん', 'れいざん', 'みなみやま'] },
+                { phrase: '男の子', ans: 'おとこのこ', d: ['おんなのこ', 'おとな', 'あかちゃん'] },
+                { phrase: '四日', ans: 'よっか', d: ['ふつか', 'みっか', 'いつか'] },
+                { phrase: '毛糸', ans: 'けいと', d: ['もめん', 'きぬいと', 'ほそいと'] },
+                { phrase: '文字', ans: 'もじ', d: ['すうじ', 'かんじ', 'かな'] },
+                { phrase: '耳打ち', ans: 'みみうち', d: ['くちうち', 'てうち', 'あしうち'] },
+
+                // Lv.4 (31~40)
+                { phrase: '七日', ans: 'なのか', d: ['いつか', 'むいか', 'ようか'] },
+                { phrase: '水車', ans: 'すいしゃ', d: ['ふうしゃ', 'ばしゃ', 'でんしゃ'] },
+                { phrase: '上手', ans: 'じょうず', d: ['へた', 'とくい', 'にがて'] },
+                { phrase: '十日', ans: 'とおか', d: ['ここのか', 'はつか', 'むいか'] },
+                { phrase: '入口', ans: 'いりぐち', d: ['でぐち', 'うらぐち', 'ひじょうぐち'] },
+                { phrase: '女子', ans: 'じょし', d: ['だんし', 'おとな', 'こども'] },
+                { phrase: '小川', ans: 'おがわ', d: ['おおかわ', 'たき', 'みずうみ'] },
+                { phrase: '川上', ans: 'かわかみ', d: ['かわしも', 'かわぐち', 'かわぞい'] },
+                { phrase: '大森', ans: 'おおもり', d: ['こもり', 'しんりん', 'じゅかい'] },
+                { phrase: '名人', ans: 'めいじん', d: ['たつじん', 'しんじん', 'くろうと'] },
+
+                // Lv.5 (41~50)
+                { phrase: '大水', ans: 'おおみず', d: ['こみず', 'こうすい', 'かんばつ'] },
+                { phrase: '正月', ans: 'しょうがつ', d: ['らいげつ', 'こんげつ', 'せんげつ'] },
+                { phrase: '生き物', ans: 'いきもの', d: ['たべもの', 'のみもの', 'のりもの'] },
+                { phrase: '青草', ans: 'あおくさ', d: ['かれくさ', 'わかくさ', 'ざっくさ'] },
+                { phrase: '夕日', ans: 'ゆうひ', d: ['あさひ', 'ひるま', 'げっこう'] },
+                { phrase: '小石', ans: 'こいし', d: ['おおいし', 'がんせき', 'じゃり'] },
+                { phrase: '赤玉', ans: 'あかだま', d: ['しらたま', 'あおだま', 'きだま'] },
+                { phrase: '千人', ans: 'せんにん', d: ['ひゃくにん', 'まんねん', 'じゅうにん'] },
+                { phrase: '先生', ans: 'せんせい', d: ['せいと', 'がくせい', 'こうちょう'] },
+                { phrase: '早起き', ans: 'はやおき', d: ['あさねぼう', 'よふかし', 'ひるね'] },
+
+                // Lv.6 (51~60)
+                { phrase: '手足', ans: 'てあし', d: ['てさき', 'あしもと', 'からだ'] },
+                { phrase: '村人', ans: 'むらびと', d: ['まちびと', 'しみん', 'こくみん'] },
+                { phrase: '大人', ans: 'おとな', d: ['こども', 'あかちゃん', 'しょうねん'] },
+                { phrase: '男子', ans: 'だんし', d: ['じょし', 'おとな', 'こども'] },
+                { phrase: '竹の子', ans: 'たけのこ', d: ['きのこ', 'わらび', 'つくし'] },
+                { phrase: '年中', ans: 'ねんじゅう', d: ['いちにち', 'ひとつき', 'らいねん'] },
+                { phrase: '水虫', ans: 'みずむし', d: ['あおむし', 'けむし', 'こんちゅう'] },
+                { phrase: '町中', ans: 'まちじゅう', d: ['むらじゅう', 'いえじゅう', 'せかいじゅう'] },
+                { phrase: '天の川', ans: 'あまのがわ', d: ['あまのそら', 'ほしぞら', 'つきよ'] },
+                { phrase: '水田', ans: 'すいでん', d: ['はたけ', 'たんぼ', 'のうち'] },
+
+                // Lv.7 (61~70)
+                { phrase: '土曜日', ans: 'どようび', d: ['きんようび', 'にちようび', 'げつようび'] },
+                { phrase: '二日', ans: 'ふつか', d: ['ついたち', 'みっか', 'よっか'] },
+                { phrase: '日曜日', ans: 'にちようび', d: ['げつようび', 'かようび', 'すいようび'] },
+                { phrase: '一年', ans: 'いちねん', d: ['にねん', 'さんねん', 'よねん'] },
+                { phrase: '白糸', ans: 'しらいと', d: ['あかいと', 'あおいと', 'くろいと'] },
+                { phrase: '八日', ans: 'ようか', d: ['むいか', 'なのか', 'ここのか'] },
+                { phrase: '作文', ans: 'さくぶん', d: ['どくしょ', 'けいさん', 'おえかき'] },
+                { phrase: '大木', ans: 'たいぼく', d: ['こだち', 'しんりん', 'たけやぶ'] },
+                { phrase: '日本', ans: 'にほん', d: ['がいこく', 'せかい', 'あじあ'] },
+                { phrase: '名字', ans: 'みょうじ', d: ['なまえ', 'あだな', 'かたがき'] },
+
+                // Lv.8 (71~80)
+                { phrase: '目玉', ans: 'めだま', d: ['みみたぶ', 'はなのあな', 'くちもと'] },
+                { phrase: '夕立ち', ans: 'ゆうだち', d: ['おおあめ', 'にわかあめ', 'ながあめ'] },
+                { phrase: '水力', ans: 'すいりょく', d: ['かりょく', 'ふうりょく', 'でんりょく'] },
+                { phrase: '六日', ans: 'むいか', d: ['いつか', 'なのか', 'ようか'] },
+                { phrase: '一人', ans: 'ひとり', d: ['ふたり', 'さんにん', 'よにん'] },
+                { phrase: '六つ', ans: 'むっつ', d: ['いつつ', 'ななつ', 'やっつ'] },
+                { phrase: '一月', ans: 'いちがつ', d: ['にがつ', 'さんがつ', 'しがつ'] },
+                { phrase: '円高', ans: 'えんだか', d: ['えんやす', 'かわせ', 'ぶっか'] },
+                { phrase: '花ばたけ', ans: 'はなばたけ', d: ['やさいばたけ', 'むぎばたけ', 'たんぼ'] },
+                { phrase: '力もち', ans: 'ちからもち', d: ['よわむし', 'きざくら', 'たのもし'] }
+            ],
+            2: [
+                // Lv.1
+                { phrase: '同じ', ans: 'おなじ', d: ['ちがう', 'そろい', 'ひとしい'] },
+                { phrase: '伝言', ans: 'でんごん', d: ['へんじ', 'ほうこく', 'そうだん'] },
+                { phrase: '工作', ans: 'こうさく', d: ['ずが', 'おえかき', 'ちぎりえ'] },
+                { phrase: '地図', ans: 'ちず', d: ['ずかん', 'しゃしん', 'いらすと'] },
+                { phrase: '図書館', ans: 'としょかん', d: ['みゅーじあむ', 'えいがかん', 'たてもの'] },
+                { phrase: '大きな声', ans: 'おおきなこえ', d: ['ちいさなおと', 'うたごえ', 'ひそひそごえ'] },
+                { phrase: '売り場', ans: 'うりば', d: ['かいば', 'のりば', 'あそびば'] },
+                { phrase: '新聞', ans: 'しんぶん', d: ['ざっし', 'ほん', 'てがみ'] },
+                { phrase: '親切', ans: 'しんせつ', d: ['ていねい', 'やさしさ', 'おもいやり'] },
+                { phrase: '強風', ans: 'きょうふう', d: ['たいふう', 'そよかぜ', 'つむじかぜ'] },
+                // Lv.2
+                { phrase: '方角', ans: 'ほうかく', d: ['ほうこう', 'すみっこ', 'かど'] },
+                { phrase: '音楽', ans: 'おんがく', d: ['えいが', 'えのぐ', 'たのしみ'] },
+                { phrase: '楽しい', ans: 'たのしい', d: ['かなしい', 'くるしい', 'こわい'] },
+                { phrase: '時計', ans: 'とけい', d: ['けいさん', 'じかん', 'すうじ'] },
+                { phrase: '計算', ans: 'けいさん', d: ['あんざん', 'もんたい', 'がくしゅう'] },
+                { phrase: '黄色', ans: 'きいろ', d: ['みどり', 'むらさき', 'ももいろ'] },
+                { phrase: '高い山', ans: 'たかいやま', d: ['ひくいやま', 'ひろいのはら', 'ふかいうみ'] },
+                { phrase: '合計', ans: 'ごうけい', d: ['ひきざん', 'わりざん', 'あまり'] },
+                { phrase: '谷川', ans: 'たにかわ', d: ['たにの底', 'やまの頂', 'うみの波'] },
+                { phrase: '国語', ans: 'こくご', d: ['さんすう', 'りか', 'しゃかい'] },
+                // Lv.3
+                { phrase: '黒板', ans: 'こくばん', d: ['かんばん', 'つくえ', 'いす'] },
+                { phrase: '今月', ans: 'こんげつ', d: ['らいげつ', 'せんげつ', 'きょねん'] },
+                { phrase: '才能', ans: 'さいのう', d: ['ちから', 'とくい', 'べんきょう'] },
+                { phrase: '細い糸', ans: 'ほそいいと', d: ['ふといいと', 'ながいいと', 'みじかいいと'] },
+                { phrase: '算数', ans: 'さんすう', d: ['こくご', 'りか', 'たのしい'] },
+                { phrase: '停止', ans: 'ていし', d: ['はっしゃ', 'うごく', 'すすむ'] },
+                { phrase: '市長', ans: 'しちょう', d: ['町長', '村長', '知事'] },
+                { phrase: '矢印', ans: 'やじるし', d: ['まーく', 'きごう', 'あしあと'] },
+                { phrase: '姉妹', ans: 'しまい', d: ['きょうだい', 'いとこ', 'かぞく'] },
+                { phrase: '思考', ans: 'しこう', d: ['かんがえ', 'なやみ', 'あきらめ'] },
+                // Lv.4
+                { phrase: '用紙', ans: 'ようし', d: ['かみ', 'のーと', 'ほん'] },
+                { phrase: 'お寺', ans: 'おてら', d: ['じんじゃ', 'きょうかい', 'たてもの'] },
+                { phrase: '自分', ans: 'じぶん', d: ['あいて', 'みんな', 'ともだち'] },
+                { phrase: '時間', ans: 'じかん', d: ['とけい', 'ひにち', 'きかん'] },
+                { phrase: '教室', ans: 'きょうしつ', d: ['こうどう', 'たいいくかん', 'しょくどう'] },
+                { phrase: '社会', ans: 'しゃかい', d: ['がっこう', 'かいしゃ', 'まち'] },
+                { phrase: '弱点', ans: 'じゃくてん', d: ['ちょうしょ', 'とくい', 'つよみ'] },
+                { phrase: '首位', ans: 'しゅい', d: ['いちばん', 'とっぷ', 'ゆうしょう'] },
+                { phrase: '体重', ans: 'たいじゅう', d: ['しんちょう', 'おもさ', 'からだ'] },
+                { phrase: '数字', ans: 'すうじ', d: ['かんじ', 'かな', 'ろーまじ'] },
+                // Lv.5
+                { phrase: '晴れ', ans: 'はれ', d: ['あめ', 'くもり', 'ゆき'] },
+                { phrase: '直線', ans: 'ちょくせん', d: ['せんろ', 'みち', 'かーぶ'] },
+                { phrase: '船長', ans: 'せんちょう', d: ['ぱいろっと', 'うんてんしゅ', 'きゃぷてん'] },
+                { phrase: '組立', ans: 'くみたて', d: ['分解', 'つくり', 'こわし'] },
+                { phrase: '走者', ans: 'そうしゃ', d: ['らんなー', 'せんしゅ', 'おうえん'] },
+                { phrase: '多数', ans: 'たすう', d: ['しょうすう', 'たくさん', 'ぜんぶ'] },
+                { phrase: '太陽', ans: 'たいよう', d: ['おひさま', 'つき', 'ほし'] },
+                { phrase: '体操', ans: 'たいそう', d: ['うんどう', 'すとれっち', 'だんす'] },
+                { phrase: '台風', ans: 'たいふう', d: ['おおあめ', 'つむじかぜ', 'きょうふう'] },
+                { phrase: '地面', ans: 'じめん', d: ['つち', 'ゆか', 'あしもと'] },
+                // Lv.6
+                { phrase: '池ばた', ans: 'いけばた', d: ['かわばた', 'うみべ', 'みずうみ'] },
+                { phrase: '知識', ans: 'ちしき', d: ['ものしり', 'べんきょう', 'おぼえ'] },
+                { phrase: 'お茶', ans: 'おちゃ', d: ['みず', 'じゅーす', 'すーぷ'] },
+                { phrase: '昼間', ans: 'ひるま', d: ['よる', 'あさ', 'ゆうがた'] },
+                { phrase: '長い', ans: 'ながい', d: ['みじかい', 'たかい', 'ひくい'] },
+                { phrase: '野鳥', ans: 'やちょう', d: ['とり', 'すずめ', 'つばめ'] },
+                { phrase: '朝食', ans: 'ちょうしょく', d: ['あさごはん', 'ひるごはん', 'ばんごはん'] },
+                { phrase: '直撃', ans: 'ちょくげき', d: ['あたり', 'ぶつかり', 'ひっと'] },
+                { phrase: '通学', ans: 'つうがく', d: ['とうこう', 'げこう', 'さんぽ'] },
+                { phrase: '兄弟', ans: 'きょうだい', d: ['しまい', 'かぞく', 'しんせき'] },
+                // Lv.7
+                { phrase: '店員', ans: 'てんいん', d: ['おきゃく', 'てんちょう', 'はたらき'] },
+                { phrase: '得点', ans: 'とくてん', d: ['てんすう', 'すこあ', 'せいかい'] },
+                { phrase: '電車', ans: 'でんしゃ', d: ['ばす', 'きしゃ', 'のりもの'] },
+                { phrase: '日本刀', ans: 'にほんとう', d: ['かたな', 'つるぎ', 'ないふ'] },
+                { phrase: '冬休み', ans: 'ふゆやすみ', d: ['なつやすみ', 'はるやすみ', 'きゅうじつ'] },
+                { phrase: '当日', ans: 'とうじつ', d: ['あした', 'きのう', 'きょう'] },
+                { phrase: '答案', ans: 'とうあん', d: ['てすと', 'もんだい', 'こたえ'] },
+                { phrase: '頭脳', ans: 'ずのう', d: ['あたま', 'かんがえ', 'ちえ'] },
+                { phrase: '同時', ans: 'どうじ', d: ['いっしょ', 'おなじじかん', 'いっせいに'] },
+                { phrase: '道路', ans: 'どうろ', d: ['みち', 'こうそく', 'ほどう'] },
+                // Lv.8
+                { phrase: '読書', ans: 'どくしょ', d: ['ほんよみ', 'べんきょう', 'さくぶん'] },
+                { phrase: '内角', ans: 'ないかく', d: ['うちがわ', 'すみっこ', 'かど'] },
+                { phrase: '南風', ans: 'みなみかぜ', d: ['きたかぜ', 'ひがしかぜ', 'にしかぜ'] },
+                { phrase: '牛肉', ans: 'ぎゅうにく', d: ['ぶたにく', 'とりにく', 'おにく'] },
+                { phrase: '馬車', ans: 'ばしゃ', d: ['じどうしゃ', 'でんしゃ', 'のりもの'] },
+                { phrase: '買い物', ans: 'かいもの', d: ['しょっぴんぐ', 'うりば', 'しなもの'] },
+                { phrase: '売店', ans: 'ばいてん', d: ['みせ', 'こんびに', 'うりば'] },
+                { phrase: '小麦', ans: 'こむぎ', d: ['おこめ', 'ぱん', 'めん'] },
+                { phrase: '半分', ans: 'はんぶん', d: ['ぜんぶ', 'いちぶ', 'すこし'] },
+                { phrase: '番号', ans: 'ばんごう', d: ['なんばー', 'すうじ', 'じゅんばん'] },
+                // Lv.9
+                { phrase: '父親', ans: 'ちちおや', d: ['おとうさん', 'ははおや', 'かぞく'] },
+                { phrase: '風車', ans: 'ふうしゃ', d: ['かざぐるま', 'すいしゃ', 'でんしゃ'] },
+                { phrase: '分数', ans: 'ぶんすう', d: ['さんすう', 'けいさん', 'かず'] },
+                { phrase: '見聞', ans: 'けんぶん', d: ['みきき', 'たいけん', 'がくしゅう'] },
+                { phrase: 'お米', ans: 'おこめ', d: ['こむぎ', 'ごはん', 'しゅしょく'] },
+                { phrase: '歩行', ans: 'ほこう', d: ['あるき', 'さんぽ', 'らんにんぐ'] },
+                { phrase: '母親', ans: 'ははおや', d: ['おかあさん', 'ちちおや', 'かぞく'] },
+                { phrase: '方法', ans: 'ほうほう', d: ['やりかた', 'しゅだん', 'こつ'] },
+                { phrase: '北風', ans: 'きたかぜ', d: ['みなみかぜ', 'そよかぜ', 'つむじかぜ'] },
+                { phrase: '毎週', ans: 'まいしゅう', d: ['まいにち', 'まいつき', 'まいねん'] },
+                // Lv.10
+                { phrase: '妹さん', ans: 'いもうとさん', d: ['おねえさん', 'おとうと', 'おにいさん'] },
+                { phrase: '万国', ans: 'ばんこく', d: ['せかい', 'いろんなくに', 'がいこく'] },
+                { phrase: '明るい', ans: 'あかるい', d: ['くらい', 'たのしい', 'まぶしい'] },
+                { phrase: '鳴き声', ans: 'なきごえ', d: ['こえ', 'うたごえ', 'なきかた'] },
+                { phrase: '毛布', ans: 'もうふ', d: ['ふとん', 'しーつ', 'けいと'] },
+                { phrase: '夜間', ans: 'やかん', d: ['よる', 'ばん', 'しんや'] },
+                { phrase: '野原', ans: 'のはら', d: ['はたけ', 'もり', 'くさむら'] },
+                { phrase: '矢がら', ans: 'やがら', d: ['やじるし', 'ゆみや', 'どうぐ'] },
+                { phrase: '理科', ans: 'りか', d: ['こくご', 'さんすう', 'しゃかい'] },
+                { phrase: '用事', ans: 'ようじ', d: ['やくそく', 'しごと', 'べんきょう'] },
+                // Lv.11
+                { phrase: '曜日', ans: 'ようび', d: ['ひにち', 'しゅうかん', 'かれんだー'] },
+                { phrase: '来週', ans: 'らいしゅう', d: ['こんしゅう', 'せんしゅう', 'らいげつ'] },
+                { phrase: '理由', ans: 'りゆう', d: ['わけ', 'きっかけ', 'げんいん'] },
+                { phrase: '里山', ans: 'さとやま', d: ['やま', 'もり', 'しぜん'] },
+                { phrase: '陸上', ans: 'りくじょう', d: ['とらっく', 'ぐらうんど', 'すぽーつ'] },
+                { phrase: '立派', ans: 'りっぱ', d: ['すごい', 'すばらしい', 'えらい'] },
+                { phrase: '意見', ans: 'いけん', d: ['かんがえ', 'おもい', 'はつげん'] },
+                { phrase: '会話', ans: 'かいわ', d: ['おしゃべり', 'はなし', 'そうだん'] },
+                { phrase: '会社', ans: 'かいしゃ', d: ['おふぃす', 'しごとば', 'しょうてん'] },
+                { phrase: '夏休み', ans: 'なつやすみ', d: ['ふゆやすみ', 'はるやすみ', 'きゅうじつ'] },
+                // Lv.12
+                { phrase: '家屋', ans: 'かおく', d: ['いえ', 'たてもの', 'じゅうたく'] },
+                { phrase: '画家', ans: 'がか', d: ['えかき', 'あーてぃすと', 'いらすとれーたー'] },
+                { phrase: '角度', ans: 'かくど', d: ['かど', 'すみ', 'さんかく'] },
+                { phrase: '開発', ans: 'かいはつ', d: ['けんきゅう', 'はつめい', 'つくり'] },
+                { phrase: '向上', ans: 'こうじょう', d: ['あっぷ', 'せいちょう', 'しんぽ'] },
+                { phrase: '友達', ans: 'ともだち', d: ['しんゆう', 'なかま', 'くらすめいと'] },
+                { phrase: '矢羽', ans: 'やばね', d: ['はね', 'ゆみや', 'かざり'] },
+                { phrase: '羽根', ans: 'はね', d: ['つばさ', 'ふさふさ', 'とり'] },
+                { phrase: '岩石', ans: 'がんせき', d: ['いし', 'いわ', 'こいし'] },
+                { phrase: '区分', ans: 'くぶん', d: ['ぐるーぷ', 'くぎり', 'わくみ'] },
+                // Lv.13
+                { phrase: '近所', ans: 'きんじょ', d: ['おとなり', 'まわり', 'ちかく'] },
+                { phrase: '弓道', ans: 'きゅうどう', d: ['ゆみや', 'ぶどう', 'すぽーつ'] },
+                { phrase: '交流', ans: 'こうりゅう', d: ['なかよし', 'つきあい', 'さんか'] },
+                { phrase: '光線', ans: 'こうせん', d: ['ひかり', 'びーむ', 'れーざー'] },
+                { phrase: '行動', ans: 'こうどう', d: ['うごき', 'ちゃれんじ', 'じっこう'] },
+                { phrase: '谷間', ans: 'たにま', d: ['たに', 'あいま', 'すきま'] },
+                { phrase: '合唱', ans: 'がっしょう', d: ['こーらす', 'うた', 'おんがく'] },
+                { phrase: '春風', ans: 'はるかぜ', d: ['そよかぜ', 'あたたかいかぜ', 'きたかぜ'] },
+                { phrase: '秋晴れ', ans: 'あきばれ', d: ['いいてんき', 'あおぞら', 'はれ'] },
+                { phrase: '晴天', ans: 'せいてん', d: ['はれ', 'いいおてんき', 'あおぞら'] },
+                // Lv.14
+                { phrase: '社会', ans: 'しゃかい', d: ['まち', 'よのなか', 'がっこう'] },
+                { phrase: '心臓', ans: 'しんぞう', d: ['こころ', 'からだ', 'むね'] },
+                { phrase: '新幹線', ans: 'しんかんせん', d: ['でんしゃ', 'とっきゅう', 'のりもの'] },
+                { phrase: '親戚', ans: 'しんせき', d: ['しんりかい', 'いとこ', 'しんぞく'] },
+                { phrase: '成功', ans: 'せいこう', d: ['たっせい', 'くりあ', 'しょうり'] },
+                { phrase: '思考', ans: 'しこう', d: ['かんがえ', 'あいであ', 'あいでぃあ'] },
+                { phrase: '食事', ans: 'しょくじ', d: ['ごはん', 'たべもの', 'らんち'] },
+                { phrase: '色彩', ans: 'しきさい', d: ['いろ', 'からー', 'でざいん'] },
+                { phrase: '住所', ans: 'じゅうしょ', d: ['いえ', 'ばしょ', 'あどれす'] },
+                { phrase: '重大', ans: 'じゅうだい', d: ['たいせつ', 'だいじ', 'たいへん'] },
+                // Lv.15
+                { phrase: '長男', ans: 'ちょうなん', d: ['おにいさん', 'おとうと', 'ちょうじょ'] },
+                { phrase: '少女', ans: 'しょうじょ', d: ['おんののこ', 'しょうねん', 'こども'] },
+                { phrase: '洗顔', ans: 'せんがん', d: ['かおあらい', 'あらい', 'てあらい'] },
+                { phrase: '遠足', ans: 'えんそく', d: ['はいきんぐ', 'さんぽ', 'たび'] },
+                { phrase: '広場', ans: 'ひろば', d: ['こうえん', 'あそびば', 'あきち'] },
+                { phrase: '戸外', ans: 'こがい', d: ['そと', 'おくがい', 'あおぞら'] },
+                { phrase: '交番', ans: 'こうばん', d: ['けいさつ', 'ぱとかー', 'みはり'] },
+                { phrase: '細工', ans: 'さいく', d: ['つくり', 'こうさく', 'しゅげい'] },
+                { phrase: '才能', ans: 'さいのう', d: ['とくい', 'ちから', 'せんす'] },
+                { phrase: '線路', ans: 'せんろ', d: ['でんしゃ', 'てつどう', 'こーす'] },
+                // Lv.16
+                { phrase: '青年', ans: 'せいねん', d: ['わかもの', 'おとな', 'しょうねん'] },
+                { phrase: '空色', ans: 'そらいろ', d: ['みずいろ', 'あお', 'すかいぶるー'] },
+                { phrase: '体系', ans: 'たいけい', d: ['からだ', 'すたいる', 'しくみ'] },
+                { phrase: '体重', ans: 'たいじゅう', d: ['おもさ', 'からだ', 'へびー'] },
+                { phrase: '多大', ans: 'ただい', d: ['たくさん', 'すごく', 'おおい'] },
+                { phrase: '先生', ans: 'せんせい', d: ['こうちょう', 'がくせい', 'きょうし'] },
+                { phrase: '店内', ans: 'てんない', d: ['みせのなか', 'うりば', 'ふろあ'] },
+                { phrase: '電灯', ans: 'でんとう', d: ['でんき', 'らいと', 'あかり'] },
+                { phrase: '当選', ans: 'とうせん', d: ['あたり', 'ごうかく', 'くりあ'] },
+                { phrase: '完璧', ans: 'かんぺき', d: ['ぱーふぇくと', 'ごーるど', 'せいかい'] }
+            ],
+            3: [
+                // Lv.1
+                { phrase: '漢字', ans: 'かんじ', d: ['ひらがな', 'かたかな', 'ろーまじ'] },
+                { phrase: '水族館', ans: 'すいぞくかん', d: ['どうぶつえん', 'はくぶつかん', 'びじゅつかん'] },
+                { phrase: '授業', ans: 'じゅぎょう', d: ['しゅくだい', 'べんきょう', 'きょうしつ'] },
+                { phrase: '商店', ans: 'しょうてん', d: ['でぱーと', 'すーぱー', 'こうじょう'] },
+                { phrase: '学期', ans: 'がっき', d: ['じかん', 'きかん', 'がくねん'] },
+                { phrase: '第一', ans: 'だいいち', d: ['さいしょ', 'はじめ', 'いちばん'] },
+                { phrase: '問題', ans: 'もんだい', d: ['こたえ', 'しつもん', 'てすと'] },
+                { phrase: '農家', ans: 'のうか', d: ['しょうにん', 'しょくにん', 'こうじょう'] },
+                { phrase: '鉄道', ans: 'てつどう', d: ['せんろ', 'でんしゃ', 'こうそく'] },
+                { phrase: '勝利', ans: 'しょうり', d: ['はいぼく', 'ゆうしょう', 'あいきょう'] },
+                // Lv.2
+                { phrase: '安心', ans: 'あんしん', d: ['しんぱい', 'ふあん', 'きんちょう'] },
+                { phrase: '暗記', ans: 'あんき', d: ['おぼえる', 'わすれる', 'きろく'] },
+                { phrase: '医師', ans: 'いし', d: ['いしゃ', 'かんごし', 'くすり'] },
+                { phrase: '委員会', ans: 'いいんかい', d: ['かいぎ', 'くらぶ', 'かつどう'] },
+                { phrase: '意見', ans: 'いけん', d: ['かんがえ', 'はつげん', 'ていあん'] },
+                { phrase: '育児', ans: 'いくじ', d: ['こそだて', 'せわ', 'いくせい'] },
+                { phrase: '全員', ans: 'ぜんいん', d: ['みんな', 'ぐるーぷ', 'めんばー'] },
+                { phrase: '病院', ans: 'びょういん', d: ['くりにっく', 'しんりょうじょ', 'やっきょく'] },
+                { phrase: '飲料', ans: 'いんりょう', d: ['のみもの', 'じゅーす', 'すいぶん'] },
+                { phrase: '運動', ans: 'うんどう', d: ['すぽーつ', 'たいそう', 'とれーにんぐ'] },
+                // Lv.3
+                { phrase: '水泳', ans: 'すいえい', d: ['すいみんぐ', 'ぷーる', 'みずあそび'] },
+                { phrase: '駅前', ans: 'えきまえ', d: ['ろーたりー', 'えき', 'ていりゅうじょ'] },
+                { phrase: '中央', ans: 'ちゅうおう', d: ['まんなか', 'せんたー', 'ちゅうしん'] },
+                { phrase: '横断', ans: 'おうだん', d: ['わたる', 'おうだんほどう', 'つうこう'] },
+                { phrase: '部屋', ans: 'へや', d: ['るーむ', 'きょうしつ', 'じたく'] },
+                { phrase: '温泉', ans: 'おんせん', d: ['おふろ', 'せんとう', 'すぱ'] },
+                { phrase: '変化', ans: 'へんか', d: ['かわる', 'へんしん', 'もでるちぇんじ'] },
+                { phrase: '荷物', ans: 'にもつ', d: ['ぱっく', 'すーつけーす', 'たくはい'] },
+                { phrase: '世界', ans: 'せかい', d: ['わーるど', 'ちきゅう', 'くに'] },
+                { phrase: '開始', ans: 'かいし', d: ['すたーと', 'はじまり', 'かいまく'] },
+                // Lv.4
+                { phrase: '階段', ans: 'かいだん', d: ['すてっぷ', 'えれべーたー', 'えすかれーたー'] },
+                { phrase: '寒い', ans: 'さむい', d: ['あたたかい', 'すずしい', 'あつい'] },
+                { phrase: '感想', ans: 'かんそう', d: ['れびゅー', 'おもい', 'かんげき'] },
+                { phrase: '港町', ans: 'みなとまち', d: ['みなと', 'うみべ', 'わん'] },
+                { phrase: '根気', ans: 'こんき', d: ['ねばり', 'しんぼう', 'がまん'] },
+                { phrase: '祭り', ans: 'まつり', d: ['いべんと', 'ふぇすてぃばる', 'おいわい'] },
+                { phrase: '坂道', ans: 'さかみち', d: ['のぼりざか', 'くだりざか', 'へいち'] },
+                { phrase: '幸福', ans: 'こうふく', d: ['しあわせ', 'はっぴー', 'らっきー'] },
+                { phrase: '拾う', ans: 'ひろう', d: ['つける', 'あつめる', 'すてる'] },
+                { phrase: '終了', ans: 'しゅうりょう', d: ['おわり', 'ごーる', 'らすと'] },
+                // Lv.5
+                { phrase: '予習', ans: 'よしゅう', d: ['ふくしゅう', 'べんきょう', 'じゅぎょう'] },
+                { phrase: '集合', ans: 'しゅうごう', d: ['あつまる', 'ぐるーぷ', 'ちーむ'] },
+                { phrase: '重大', ans: 'じゅうだい', d: ['たいせつ', 'だいじ', 'たいへん'] },
+                { phrase: '宿泊', ans: 'しゅくはく', d: ['おとまり', 'ほてる', 'りょかん'] },
+                { phrase: '場所', ans: 'ばしょ', d: ['すぽっと', 'いち', 'あどれす'] },
+                { phrase: '猛暑', ans: 'もうしょ', d: ['あつい', 'もうしょび', 'まなつ'] },
+                { phrase: '救助', ans: 'きゅうじょ', d: ['たすける', 'れすきゅー', 'きゅうかん'] },
+                { phrase: '昭和', ans: 'しょうわ', d: ['へいせい', 'れいわ', 'たいしょう'] },
+                { phrase: '消火', ans: 'しょうか', d: ['ひけし', 'しょうぼう', 'けす'] },
+                { phrase: '植物', ans: 'しょくぶつ', d: ['くさき', 'はな', 'ぐりーん'] },
+                // Lv.6
+                { phrase: '深い', ans: 'ふかい', d: ['あさい', 'たかい', 'ひくい'] },
+                { phrase: '申請', ans: 'しんせい', d: ['てつづき', 'もうしこみ', 'おねがい'] },
+                { phrase: '写真', ans: 'しゃしん', d: ['かめら', 'しょっと', 'むーびー'] },
+                { phrase: '神社', ans: 'じんじゃ', d: ['おてら', 'とりい', 'さんぱい'] },
+                { phrase: '進路', ans: 'しんろ', d: ['こーす', 'みち', 'みらい'] },
+                { phrase: '世界', ans: 'せかい', d: ['ぐろーばる', 'ちきゅう', 'ばんこく'] },
+                { phrase: '整理', ans: 'せいり', d: ['かたづけ', 'せいとん', 'そうじ'] },
+                { phrase: '昔話', ans: 'むかしばなし', d: ['むかし', 'みんわ', 'でんせつ'] },
+                { phrase: '全体', ans: 'ぜんたい', d: ['ぜんぶ', 'おーる', 'とーたる'] },
+                { phrase: '相談', ans: 'そうだん', d: ['はなしあい', 'みーてぃんぐ', 'かうんせりんぐ'] },
+                // Lv.7
+                { phrase: '放送', ans: 'ほうそう', d: ['らじお', 'てれび', 'あなうんす'] },
+                { phrase: '想像', ans: 'そうぞう', d: ['いめーじ', 'あいであ', 'かんがえ'] },
+                { phrase: '息絶える', ans: 'いきたえる', d: ['いきがとまる', 'たおれる', 'やすむ'] },
+                { phrase: '急速', ans: 'きゅうそく', d: ['すぴーでぃー', 'はやい', 'きゅうげき'] },
+                { phrase: '家族', ans: 'かぞく', d: ['ふぁみりー', 'しんせき', 'なかま'] },
+                { phrase: '他人', ans: 'たにん', d: ['しらないひと', 'あいて', 'めんばー'] },
+                { phrase: '打撃', ans: 'だげき', d: ['ひっと', 'しょっく', 'だめーじ'] },
+                { phrase: '対決', ans: 'たいけつ', d: ['ばとる', 'しょうぶ', 'まっち'] },
+                { phrase: '待機', ans: 'たいき', d: ['すたんばい', 'まつ', 'きゅうけい'] },
+                { phrase: '時代', ans: 'じだい', d: ['とき', 'じぇねれーしょん', 'れきし'] },
+                // Lv.8
+                { phrase: '石炭', ans: 'せきたん', d: ['かえん', 'ねんりょう', 'えねるぎー'] },
+                { phrase: '短い', ans: 'みじかい', d: ['ながい', 'ちいさい', 'たかい'] },
+                { phrase: '談話', ans: 'だんわ', d: ['おしゃべり', 'とーく', 'かいわ'] },
+                { phrase: '着用', ans: 'ちゃくよう', d: ['きる', 'そうちゃく', 'どれすあっぷ'] },
+                { phrase: '注文', ans: 'ちゅうもん', d: ['おーだー', 'りくえすと', 'おねがい'] },
+                { phrase: '電柱', ans: 'でんちゅう', d: ['はしら', 'でんき', 'ぽーる'] },
+                { phrase: '丁目', ans: 'ちょうめ', d: ['ばんち', 'あどれす', 'くぶん'] },
+                { phrase: '手帳', ans: 'てちょう', d: ['すけじゅーる', 'めも', 'のーと'] },
+                { phrase: '調べ', ans: 'しらべ', d: ['りさーち', 'けんさく', 'ちぇっく'] },
+                { phrase: '追急', ans: 'ついきゅう', d: ['おいかける', 'ちぇいす', 'ついせき'] },
+                // Lv.9
+                { phrase: '定期', ans: 'ていき', d: ['ていきけん', 'ぱす', 'るーてぃん'] },
+                { phrase: '庭園', ans: 'ていえん', d: ['がーでん', 'にわ', 'こうえん'] },
+                { phrase: '笛吹き', ans: 'ふえふき', d: ['めろでぃ', 'えんそう', 'ふるーと'] },
+                { phrase: '転校', ans: 'てんこう', d: ['ひっこし', 'ちぇんじ', 'てんきん'] },
+                { phrase: '東京都', ans: 'とうきょうと', d: ['しゅと', 'とうきょう', 'かんとう'] },
+                { phrase: '温度', ans: 'おんど', d: ['きおん', 'さーも', 'あつさ'] },
+                { phrase: '投手', ans: 'とうしゅ', d: ['ぴっちゃー', 'せんしゅ', 'きゃっちゃー'] },
+                { phrase: '豆腐', ans: 'とうふ', d: ['だいず', 'なべ', 'みそしる'] },
+                { phrase: '島国', ans: 'しまぐに', d: ['あいらんど', 'にほん', 'うみ'] },
+                { phrase: '湯気', ans: 'ゆげ', d: ['すちーむ', 'けむり', 'あつあつ'] },
+                // Lv.10
+                { phrase: '登山', ans: 'とざん', d: ['はいきんぐ', 'くらいむ', 'やまのぼり'] },
+                { phrase: '平等', ans: 'びょうどう', d: ['いこーる', 'おなじ', 'ふぇあ'] },
+                { phrase: '移動', ans: 'いどう', d: ['むーぶ', 'ひっこし', 'とらべる'] },
+                { phrase: '児童', ans: 'じどう', d: ['こども', 'きっず', 'しょうがくせい'] },
+                { phrase: '毒物', ans: 'どくぶつ', d: ['ぽいずん', 'きけん', 'くすり'] },
+                { phrase: '予定', ans: 'よてい', d: ['ぷらん', 'すけじゅーる', 'やくそく'] },
+                { phrase: '旅行', ans: 'りょこう', d: ['つあー', 'どらいぶ', 'ばかんす'] },
+                { phrase: '服装', ans: 'ふくそう', d: ['ふぁっしょん', 'ふく', 'すたいる'] },
+                { phrase: '幸福', ans: 'こうふく', d: ['はっぴー', 'しあわせ', 'らっきー'] },
+                { phrase: '筆記', ans: 'ひっき', d: ['らいてぃんぐ', 'めも', 'かきとり'] },
+                // Lv.11
+                { phrase: '勉強', ans: 'べんきょう', d: ['すたでぃ', 'がくしゅう', 'とっくん'] },
+                { phrase: '保持', ans: 'ほじ', d: ['きーぷ', 'いじ', 'ほぞん'] },
+                { phrase: '命ずる', ans: 'めいずる', d: ['おーだー', 'めいれい', 'しじ'] },
+                { phrase: '坂道', ans: 'さかみち', d: ['すろーぷ', 'のぼりざか', 'へいち'] },
+                { phrase: '表面', ans: 'ひょうめん', d: ['おもて', 'とっぷ', 'かばー'] },
+                { phrase: '板前', ans: 'いたまえ', d: ['しぇふ', 'りょうりにん', 'しょくにん'] },
+                { phrase: '危険', ans: 'きけん', d: ['ぴんち', 'でんじゃー', 'あぶない'] },
+                { phrase: '理由', ans: 'りゆう', d: ['わけ', 'げんいん', 'るーつ'] },
+                { phrase: '具象', ans: 'ぐしょう', d: ['りある', 'かたち', 'ぐたい'] },
+                { phrase: '宮殿', ans: 'きゅうでん', d: ['きゃっする', 'しろ', 'たてもの'] },
+                // Lv.12
+                { phrase: '病院', ans: 'びょういん', d: ['くりにっく', 'しんりょうじょ', 'いほいん'] },
+                { phrase: '集合', ans: 'しゅうごう', d: ['みーてぃんぐ', 'あつまる', 'ちーむ'] },
+                { phrase: '共同', ans: 'きょうどう', d: ['いっしょ', 'ぺあ', 'こらぼ'] },
+                { phrase: '銀行', ans: 'ぎんこう', d: ['ばんく', 'きんこ', 'おかね'] },
+                { phrase: '練習', ans: 'れんしゅう', d: ['とっくん', 'わーくあうと', 'れっすん'] },
+                { phrase: '決心', ans: 'けっしん', d: ['けつい', 'まいんど', 'かくご'] },
+                { phrase: '研究所', ans: 'けんきゅうじょ', d: ['らぼ', 'しせつ', 'すたじお'] },
+                { phrase: '様子', ans: 'ようす', d: ['すたいる', 'かんじ', 'じょうたい'] },
+                { phrase: '努力', ans: 'どりょく', d: ['がんばり', 'とらい', 'ちゃれんじ'] },
+                { phrase: '受験', ans: 'じゅけん', d: ['てすと', 'にゅうし', 'とらいある'] },
+                // Lv.13
+                { phrase: '速度', ans: 'そくど', d: ['すぴーど', 'ぺーす', 'てんぽ'] },
+                { phrase: '旅券', ans: 'りょけん', d: ['ぱすぽーと', 'ちけっと', 'かーど'] },
+                { phrase: '記録', ans: 'きろく', d: ['れこーど', 'ろぐ', 'めも'] },
+                { phrase: '旅路', ans: 'たびじ', d: ['るーと', 'たび', 'みちのり'] },
+                { phrase: '指導', ans: 'しどう', d: ['こーち', 'あどばいす', 'きょういく'] },
+                { phrase: '表情', ans: 'ひょうじょう', d: ['かお', 'るっくす', 'ふぇいす'] },
+                { phrase: '集団', ans: 'しゅうだん', d: ['ぐるーぷ', 'ちーむ', 'くらす'] },
+                { phrase: '実験', ans: 'じっけん', d: ['てすと', 'とらいある', 'けんきゅう'] },
+                { phrase: '結果', ans: 'けっか', d: ['すこあ', 'りざると', 'ごーる'] },
+                { phrase: '服従', ans: 'ふくじゅう', d: ['したがう', 'きーぷ', 'まなー'] },
+                // Lv.14
+                { phrase: '送別', ans: 'そうべつ', d: ['おわかれ', 'ばいばい', 'そうこう'] },
+                { phrase: '朝食', ans: 'ちょうしょく', d: ['あさごはん', 'もーにんぐ', 'ぶれっくふぁすと'] },
+                { phrase: '礼儀', ans: 'れいぎ', d: ['まなー', 'あいさつ', 'えちけっと'] },
+                { phrase: '始発', ans: 'しはつ', d: ['ふぁーすと', 'あさいち', 'すたーと'] },
+                { phrase: '開放', ans: 'かいほう', d: ['おーぷん', 'ふりー', 'かいじょう'] },
+                { phrase: '命令', ans: 'めいれい', d: ['こまんど', 'しじ', 'おーだー'] },
+                { phrase: '平和', ans: 'へいわ', d: ['ぴーす', 'あんしん', 'なごやか'] },
+                { phrase: '反対', ans: 'はんたい', d: ['えぬじー', 'ちがう', 'ぎゃく'] },
+                { phrase: '交通', ans: 'こうつう', d: ['あくせす', 'とらふぃっく', 'のりもの'] },
+                { phrase: '乗車', ans: 'じょうしゃ', d: ['のる', 'らいど', 'いん'] },
+                // Lv.15
+                { phrase: '到着', ans: 'とうちゃく', d: ['ごーる', 'あらいばる', 'ついた'] },
+                { phrase: '安全', ans: 'あんぜん', d: ['せーふてぃ', 'だいじょうぶ', 'おーけー'] },
+                { phrase: '自由', ans: 'じゆう', d: ['ふりー', 'おまかせ', 'じざい'] },
+                { phrase: '希望', ans: 'きぼう', d: ['ほーぷ', 'ねがい', 'ゆめ'] },
+                { phrase: '計画', ans: 'けいかく', d: ['ぷらん', 'ぷろぐらみんぐ', 'すけじゅーる'] },
+                { phrase: '目的', ans: 'もくてき', d: ['たーげっと', 'ごーる', 'えいむ'] },
+                { phrase: '発覚', ans: 'はっかく', d: ['みつかる', 'おーぷん', 'はっけん'] },
+                { phrase: '発明', ans: 'はつめい', d: ['いんべんしょん', 'つくり', 'あいであ'] },
+                { phrase: '完成', ans: 'かんせい', d: ['こんぷりーと', 'できた', 'ふぃなっしゅ'] },
+                { phrase: '整理', ans: 'せいり', d: ['くりーん', 'かたづけ', 'せいとん'] },
+                // Lv.16
+                { phrase: '管理', ans: 'かんり', d: ['まねじめんと', 'こんとろーる', 'きーぷ'] },
+                { phrase: '協力', ans: 'きょうりょく', d: ['ちーむわーく', 'あしすと', 'さぽーと'] },
+                { phrase: '信用', ans: 'しんよう', d: ['とらすと', 'しんらい', 'おーけー'] },
+                { phrase: '感謝', ans: 'かんしゃ', d: ['さんくす', 'ありがとう', 'お礼'] },
+                { phrase: '友情', ans: 'ゆうじょう', d: ['ふれんどしっぷ', 'きずな', 'なかま'] },
+                { phrase: '尊敬', ans: 'そんけい', d: ['りすぺくと', 'あこがれ', 'すごい'] },
+                { phrase: '応援', ans: 'おうえん', d: ['ふぁいと', 'えーる', 'ちゃんと'] },
+                { phrase: '挑戦', ans: 'ちょうせん', d: ['ちゃれんじ', 'あたっく', 'とらい'] },
+                { phrase: '克服', ans: 'こくふく', d: ['くりあ', 'のりこえる', 'げっと'] },
+                { phrase: '勝利', ans: 'しょうり', d: ['びくとりー', 'ういん', 'ごーるど'] },
+                // Lv.17
+                { phrase: '発展', ans: 'はってん', d: ['ぐろう', 'のびる', 'しんぽ'] },
+                { phrase: '成長', ans: 'せいちょう', d: ['あっぷ', 'すてっぷあっぷ', 'いくせい'] },
+                { phrase: '進歩', ans: 'しんぽ', d: ['ぷろぐれす', 'ぜんしん', 'こうじょう'] },
+                { phrase: '達成', ans: 'たっせい', d: ['くりあ', 'みっしょんたっせい', 'ごーる'] },
+                { phrase: '黄金', ans: 'おうごん', d: ['ごーるど', 'きらきら', 'ごーじゃす'] },
+                { phrase: '栄光', ans: 'えいこう', d: ['ぐろーりー', 'しょうり', 'ほまれ'] },
+                { phrase: '実現', ans: 'じつげん', d: ['かなう', 'りある', 'じっこう'] },
+                { phrase: '解決', ans: 'かいけつ', d: ['くりあ', 'かいけつさく', 'おーけー'] },
+                { phrase: '探求', ans: 'たんきゅう', d: ['さーち', 'けんきゅう', 'たんけん'] },
+                { phrase: '考察', ans: 'こうさつ', d: ['かんがえ', 'ぶんせき', 'ちぇっく'] },
+                // Lv.18
+                { phrase: '分析', ans: 'ぶんせき', d: ['ちぇっく', 'あなりしす', 'でーた'] },
+                { phrase: '理解', ans: 'りかい', d: ['わかった', 'ますたー', 'のうはう'] },
+                { phrase: '応用', ans: 'おうよう', d: ['あれんじ', 'つかいこなす', 'かすたまいず'] },
+                { phrase: '活用', ans: 'かつよう', d: ['つかう', 'あくてぃぶ', 'いかす'] },
+                { phrase: '貢献', ans: 'こうけん', d: ['やくにたつ', 'さぽーと', 'ぎぶ'] },
+                { phrase: '創造', ans: 'そうぞう', d: ['くりえいと', 'つくる', 'でざいん'] },
+                { phrase: '革新', ans: 'かくしん', d: ['いのべーしょん', 'あたらしさ', 'ちぇんじ'] },
+                { phrase: '躍進', ans: 'やくしん', d: ['じゃんぷ', 'だいかつやく', 'すてっぷ'] },
+                { phrase: '飛躍', ans: 'ひやく', d: ['じゃんぷ', 'はばたき', 'だいしんぽ'] },
+                { phrase: '完結', ans: 'かんけつ', d: ['こんぷりーと', 'おわり', 'ふぃなーれ'] },
+                // Lv.19
+                { phrase: '頂点', ans: 'ちょうてん', d: ['とっぷ', 'ぴーく', 'さいこう'] },
+                { phrase: '覇者', ans: 'はしゃ', d: ['ちゃんぴおん', 'きんぐ', 'しょうしゃ'] },
+                { phrase: '殿堂', ans: 'でんどう', d: ['れじぇんど', 'ごーるど', 'めいよ'] },
+                { phrase: '黄金期', ans: 'おうごんき', d: ['べすとしーずん', 'ぴーく', 'ぜっちょう'] },
+                { phrase: '光芒', ans: 'こうぼう', d: ['ひかり', 'びーむ', 'おーら'] },
+                { phrase: '全知全能', ans: 'ぜんちぜんのう', d: ['あるせうす', 'ぱーふぇくと', 'かみ'] },
+                { phrase: '伝説', ans: 'でんせつ', d: ['れじぇんど', 'しんわ', 'ますたー'] },
+                { phrase: '創世', ans: 'そうせい', d: ['はじまり', 'くりえいと', 'ばーす'] },
+                { phrase: '神話', ans: 'しんわ', d: ['ろまん', 'おはなし', 'でんせつ'] },
+                { phrase: '無限', ans: 'むげん', d: ['いんふぃにてぃ', 'むりょう', 'どこまでも'] },
+                // Lv.20
+                { phrase: 'マスター', ans: 'ますたー', d: ['はしゃ', 'ぷろ', 'えきすぱーと'] },
+                { phrase: 'カードコンプ', ans: 'こんぷりーと', d: ['あつめた', 'ぜんぶ', 'くりあ'] },
+                { phrase: '図鑑コンプ', ans: 'ずかんかんせい', d: ['こんぷ', 'たっせい', 'ごーるど'] },
+                { phrase: 'よみポケ王', ans: 'よみぽけおう', d: ['ますたー', 'ちゃんぴおん', 'いちばん'] },
+                { phrase: '全問正解', ans: 'ぜんもんせいかい', d: ['ぱーふぇくと', 'ごーるど', 'ひゃくてん'] },
+                { phrase: '全知全能', ans: 'ぜんちぜんのう', d: ['かみ', 'むげん', 'さいきょう'] },
+                { phrase: '究極', ans: 'きゅうきょく', d: ['あるてぃめっと', 'さいこう', 'らすと'] },
+                { phrase: '無双', ans: 'むそう', d: ['むてき', 'さいきょう', 'いちばん'] },
+                { phrase: '至高', ans: 'しこう', d: ['さいこう', 'なんばーわん', 'とっぷ'] },
+                { phrase: '完全勝利', ans: 'かんぜんしょうり', d: ['ぱーふぇくとういん', 'きんめだる', 'くりあ'] }
+            ],
+            4: [
+                // Lv.1
+                { phrase: '愛情', ans: 'あいじょう', d: ['ゆうじょう', 'しんらい', 'じゅよう'] },
+                { phrase: '愛しい', ans: 'いとしい', d: ['うれしい', 'やさしい', 'かなしい'] },
+                { phrase: '案内', ans: 'あんない', d: ['しょうかい', 'せつめい', 'つみたて'] },
+                { phrase: '以上', ans: 'いじょう', d: ['いか', 'みまん', 'ちょうか'] },
+                { phrase: '衣料', ans: 'いりょう', d: ['ふくりょう', 'しょくりょう', 'ざいりょう'] },
+                { phrase: '周囲', ans: 'しゅうい', d: ['まわり', 'きんじょ', 'かんきょう'] },
+                { phrase: '英語', ans: 'えいご', d: ['こくご', 'さんすう', 'りか'] },
+                { phrase: '栄養', ans: 'えいよう', d: ['けんこう', 'たいりょく', 'びたまん'] },
+                { phrase: '食塩', ans: 'しょくえん', d: ['おざとう', 'おしょうゆ', 'おす'] },
+                { phrase: '参加', ans: 'さんか', d: ['ふさんか', 'けんがく', 'おうえん'] },
+                // Lv.2
+                { phrase: '照らす', ans: 'てらす', d: ['ひかる', 'もやす', 'あぶる'] },
+                { phrase: '加熱', ans: 'かねつ', d: ['れいきゃく', 'おんど', 'たきび'] },
+                { phrase: '果実', ans: 'かじつ', d: ['くだもの', 'やさい', 'たね'] },
+                { phrase: '貨物', ans: 'かもつ', d: ['にもつ', 'ぱっく', 'とらっく'] },
+                { phrase: '課目', ans: 'かもく', d: ['きょうか', 'じゅぎょう', 'べんきょう'] },
+                { phrase: '芽生え', ans: 'めばえ', d: ['はっぱ', 'つぼみ', 'さく'] },
+                { phrase: '改革', ans: 'かいかく', d: ['へんこう', 'あたらしさ', 'へんかん'] },
+                { phrase: '機械', ans: 'きかい', d: ['ましん', 'ろぼっと', 'えんじん'] },
+                { phrase: '災害', ans: 'さいがい', d: ['じこ', 'たいふう', 'じしん'] },
+                { phrase: '各地', ans: 'かくち', d: ['ぜんこく', 'あちこち', 'ばしょ'] },
+                // Lv.3
+                { phrase: '感覚', ans: 'かんかく', d: ['せんす', 'きもち', 'たっち'] },
+                { phrase: '完全', ans: 'かんぜん', d: ['ぱーふぇくと', 'ぜんぶ', 'ふる'] },
+                { phrase: '官庁', ans: 'かんちょう', d: ['やくしょ', 'せいふ', 'びる'] },
+                { phrase: '管理', ans: 'かんり', d: ['まねじめんと', 'こんとろーる', 'せわ'] },
+                { phrase: '関係', ans: 'かんけい', d: ['つながり', 'りんく', 'あいだ'] },
+                { phrase: '観客', ans: 'かんきゃく', d: ['おーでぃえんす', 'おきゃくさん', 'おうえん'] },
+                { phrase: '願い', ans: 'ねがい', d: ['きぼう', 'ゆめ', 'おいのおり'] },
+                { phrase: '希望', ans: 'きぼう', d: ['ほーぷ', 'ねがい', 'ゆめ'] },
+                { phrase: '季節', ans: 'きせつ', d: ['しーずん', 'しき', 'じき'] },
+                { phrase: '国旗', ans: 'こっき', d: ['ふらっぐ', 'はた', 'しんぼる'] },
+                // Lv.4
+                { phrase: '食器', ans: 'しょっき', d: ['おさら', 'こっぷ', 'すぷーん'] },
+                { phrase: '机上', ans: 'きじょう', d: ['つくえのうえ', 'ですく', 'のーと'] },
+                { phrase: '気候', ans: 'きこう', d: ['てんき', 'きおん', 'うぇざー'] },
+                { phrase: '既成', ans: 'きせい', d: ['できあがり', 'すでにある', 'かんせい'] },
+                { phrase: '機会', ans: 'きかい', d: ['ちゃんす', 'たいみんぐ', 'ばあい'] },
+                { phrase: '規則', ans: 'きそく', d: ['るーる', 'まなー', 'やくそく'] },
+                { phrase: '技術', ans: 'ぎじゅつ', d: ['すきる', 'てくにっく', 'わざ'] },
+                { phrase: '義理', ans: 'ぎり', d: ['にんじょう', 'まなー', 'おれい'] },
+                { phrase: '逆転', ans: 'ぎゃくてん', d: ['かえす', 'たーん', 'ちぇんじ'] },
+                { phrase: '永久', ans: 'えいきゅう', d: ['ずっと', 'えいえん', 'いつまでも'] },
+                // Lv.5
+                { phrase: '探求', ans: 'たんきゅう', d: ['さがす', 'けんきゅう', 'りさーち'] },
+                { phrase: '救助', ans: 'きゅうじょ', d: ['れすきゅー', 'たすける', 'きゅうかん'] },
+                { phrase: '泣く', ans: 'なく', d: ['わらう', 'おこる', 'さけぶ'] },
+                { phrase: '給食', ans: 'きゅうしょく', d: ['らんち', 'ごはん', 'こんだて'] },
+                { phrase: '挙手', ans: 'きょしゅ', d: ['てをあげる', 'はつげん', 'さんか'] },
+                { phrase: '漁業', ans: 'ぎょぎょう', d: ['りょう', 'さかなとり', 'うみ'] },
+                { phrase: '共同', ans: 'きょうどう', d: ['こらぼ', 'いっしょ', 'ぺあ'] },
+                { phrase: '協力', ans: 'きょうりょく', d: ['さぽーと', 'ちーむわーく', 'てつだい'] },
+                { phrase: '鏡面', ans: 'きょうめん', d: ['かがみ', 'みらー', 'つるつる'] },
+                { phrase: '競争', ans: 'きょうそう', d: ['れーす', 'ばとる', 'しょうぶ'] },
+                // Lv.6
+                { phrase: '極限', ans: 'きょくげん', d: ['りみっと', 'ぎりぎり', 'さいこう'] },
+                { phrase: '清流', ans: 'せいりゅう', d: ['きれいなかわ', 'みず', 'ながれ'] },
+                { phrase: '区域', ans: 'くいき', d: ['えりあ', 'ぞーん', 'ばしょ'] },
+                { phrase: '苦労', ans: 'くろう', d: ['たいへん', 'がんばり', 'なやみ'] },
+                { phrase: '道具', ans: 'どうぐ', d: ['つーる', 'ぎあ', 'あいてむ'] },
+                { phrase: '副社長', ans: 'ふくしゃちょう', d: ['さぶ', 'せんむ', 'やくいん'] },
+                { phrase: '群衆', ans: 'ぐんしゅう', d: ['ひとごみ', 'ぎゃらりー', 'みんな'] },
+                { phrase: '軍隊', ans: 'ぐんたい', d: ['そるじゃー', 'あーみー', 'ぶたい'] },
+                { phrase: '地方', ans: 'ちほう', d: ['えりあ', 'ろーかる', 'ちいき'] },
+                { phrase: '半径', ans: 'はんけい', d: ['さいず', 'まる', 'きょり'] },
+                // Lv.7
+                { phrase: '模型', ans: 'もけい', d: ['ぷらもでる', 'みにちゅあ', 'さんぷる'] },
+                { phrase: '景色', ans: 'けしき', d: ['ふうけい', 'びゅー', 'ろけーしょん'] },
+                { phrase: '芸術', ans: 'げいじゅつ', d: ['あーと', 'でざいん', 'さくひん'] },
+                { phrase: '欠席', ans: 'けっせき', d: ['やすみ', 'ふざい', 'きゃんせる'] },
+                { phrase: '結論', ans: 'けつろん', d: ['らすと', 'こたえ', 'まとめ'] },
+                { phrase: '建設', ans: 'けんせつ', d: ['こうじ', 'つくる', 'びるでぃんぐ'] },
+                { phrase: '健康', ans: 'けんこう', d: ['へるす', 'げんき', 'からだ'] },
+                { phrase: '実験', ans: 'じっけん', d: ['てすと', 'とらいある', 'けんきゅう'] },
+                { phrase: '固い', ans: 'かたい', d: ['やわらかい', 'おもい', 'かるい'] },
+                { phrase: '功績', ans: 'こうせき', d: ['てがら', 'あちーぶめんと', 'けっか'] },
+                // Lv.8
+                { phrase: '好評', ans: 'こうひょう', d: ['にんき', 'べすと', 'いいね'] },
+                { phrase: '天候', ans: 'てんこう', d: ['てんき', 'うぇざー', 'きこう'] },
+                { phrase: '報告', ans: 'ほうこく', d: ['れぽーと', 'おしらせ', 'ほうれんそう'] },
+                { phrase: '誤差', ans: 'ごさ', d: ['ずれ', 'ちがい', 'みす'] },
+                { phrase: '野菜', ans: 'やさい', d: ['べじたぶる', 'さらだ', 'とまと'] },
+                { phrase: '最高', ans: 'さいこう', d: ['べすと', 'とっぷ', 'なんばーわん'] },
+                { phrase: '材料', ans: 'ざいりょう', d: ['そざい', 'ぱーつ', 'れしぴ'] },
+                { phrase: '坂道', ans: 'さかみち', d: ['すろーぷ', 'のぼり', 'くだり'] },
+                { phrase: '札束', ans: 'ふだたば', d: ['おかね', 'きゃっしゅ', 'ばんどる'] },
+                { phrase: '印刷', ans: 'いんさつ', d: ['ぷりんと', 'こぴー', 'ぷれす'] },
+                // Lv.9
+                { phrase: '殺虫', ans: 'さっちゅう', d: ['むしよけ', 'たいじ', 'がーど'] },
+                { phrase: '警察', ans: 'けいさつ', d: ['ぽりす', 'こうばん', 'ぱとかー'] },
+                { phrase: '散歩', ans: 'さんぽ', d: ['うぉーきんぐ', 'おさんぽ', 'ぶらぶら'] },
+                { phrase: '生産', ans: 'せいさん', d: ['つくる', 'ぷろだくと', 'こうじょう'] },
+                { phrase: '残念', ans: 'ざんねん', d: ['おしい', 'あんはっぴー', 'ざんねんしょう'] },
+                { phrase: '司会', ans: 'しかい', d: ['えむしー', 'ぱーそなりてぃ', 'しんこう'] },
+                { phrase: '歴史', ans: 'れきし', d: ['ひすとりー', 'むかし', 'でんとう'] },
+                { phrase: '失望', ans: 'しつぼう', d: ['がっかり', 'しょっく', 'らくたん'] },
+                { phrase: '試練', ans: 'しれん', d: ['ぴんち', 'てすと', 'はーどる'] },
+                { phrase: '児童', ans: 'じどう', d: ['こども', 'きっず', 'しょうがくせい'] },
+                // Lv.10
+                { phrase: '政治', ans: 'せいじ', d: ['がばめんと', 'こっかい', 'にゅーす'] },
+                { phrase: '滋養', ans: 'じよう', d: ['えいよう', 'けんこう', 'すたみな'] },
+                { phrase: '辞書', ans: 'じしょ', d: ['じてん', 'でぃくしょなりー', 'ほん'] },
+                { phrase: '鹿角', ans: 'しかつの', d: ['つの', 'しか', 'どうぶつ'] },
+                { phrase: '式典', ans: 'しきてん', d: ['せれもにー', 'いべんと', 'おいわい'] },
+                { phrase: '七月', ans: 'しちがつ', d: ['なつ', 'かれんだー', 'なながつ'] },
+                { phrase: '失敗', ans: 'しっぱい', d: ['みす', 'えぬじー', 'やりなおし'] },
+                { phrase: '実現', ans: 'じつげん', d: ['かなう', 'りある', 'たっせい'] },
+                { phrase: '質問', ans: 'しつもん', d: ['くえすちょん', 'はてな', 'きく'] },
+                { phrase: '竹林', ans: 'ちくりん', d: ['たけやぶ', 'ばんぶー', 'もり'] },
+                // Lv.11
+                { phrase: '笑顔', ans: 'えがお', d: ['すまいる', 'にっこり', 'ふぇいす'] },
+                { phrase: '合唱', ans: 'がっしょう', d: ['こーらす', 'うた', 'はーもにー'] },
+                { phrase: '商業', ans: 'しょうぎょう', d: ['びじねす', 'あきない', 'しょっぷ'] },
+                { phrase: '照度', ans: 'しょうど', d: ['あかるさ', 'らいと', 'るくす'] },
+                { phrase: '賞状', ans: 'しょうじょう', d: ['しょう', 'ひょうしょうじょう', 'とろふぃー'] },
+                { phrase: '大臣', ans: 'だいじん', d: ['せいじか', 'りーだー', 'きゃびねっと'] },
+                { phrase: '信頼', ans: 'しんらい', d: ['とらすと', 'しんよう', 'きずな'] },
+                { phrase: '反省', ans: 'はんせい', d: ['ふりかえり', 'ちぇっく', 'かいぜん'] },
+                { phrase: '清潔', ans: 'せいけつ', d: ['くりーん', 'きれい', 'ぴかぴか'] },
+                { phrase: '静か', ans: 'しずか', d: ['さいれんと', 'おちついた', 'しーん'] },
+                // Lv.12
+                { phrase: '座席', ans: 'ざせき', d: ['しーと', 'いす', 'ぷれみあむ'] },
+                { phrase: '面積', ans: 'めんせき', d: ['ひろさ', 'えりあ', 'さいず'] },
+                { phrase: '折る', ans: 'おる', d: ['ぶれいく', 'たたむ', 'まげる'] },
+                { phrase: '解説', ans: 'かいせつ', d: ['せつめい', 'がいど', 'れくちゃー'] },
+                { phrase: '浅い', ans: 'あさい', d: ['ふかい', 'ひくい', 'ちかい'] },
+                { phrase: '戦争', ans: 'せんそう', d: ['ばとる', 'あらそい', 'ふんそう'] },
+                { phrase: '選挙', ans: 'せんきょ', d: ['とうひょう', 'ちょいす', 'えらぶ'] },
+                { phrase: '自然', ans: 'しぜん', d: ['ねいちゃー', 'もり', 'うみ'] },
+                { phrase: '争い', ans: 'あらそい', d: ['ばとる', 'けんか', 'まっち'] },
+                { phrase: '倉庫', ans: 'そうこ', d: ['がれーじ', 'ものおき', 'すとあ'] },
+                // Lv.13
+                { phrase: '巣穴', ans: 'すあな', d: ['おうち', 'あな', 'ねぐら'] },
+                { phrase: '約束', ans: 'やくそく', d: ['ぷろみす', 'あぽいんと', 'るーる'] },
+                { phrase: '側面', ans: 'そくめん', d: ['さいど', 'よこ', 'ぷろふぁいる'] },
+                { phrase: '継続', ans: 'けいぞく', d: ['つづける', 'きーぷ', 'こんてぃにゅー'] },
+                { phrase: '卒業', ans: 'そつぎょう', d: ['ごーる', 'たびだち', 'おわり'] },
+                { phrase: '子孫', ans: 'しそん', d: ['しそう', 'ふぁみりー', 'すえ'] },
+                { phrase: '温帯', ans: 'おんたい', d: ['きこう', 'えりあ', 'あたたかい'] },
+                { phrase: '隊列', ans: 'たいれつ', d: ['らいん', 'ならび', 'ふぉーめーしょん'] },
+                { phrase: '発達', ans: 'はったつ', d: ['ぐろう', 'せいちょう', 'しんぽ'] },
+                { phrase: '単純', ans: 'たんじゅん', d: ['しんぷる', 'かんたん', 'いーじー'] },
+                // Lv.14
+                { phrase: '放置', ans: 'ほうち', d: ['すてる', 'そのまま', 'するー'] },
+                { phrase: '仲間', ans: 'なかま', d: ['ふれんど', 'ちーむ', 'くらすめいと'] },
+                { phrase: '貯金', ans: 'ちょきん', d: ['せーぶ', 'へそくり', 'ちょきんばこ'] },
+                { phrase: '兆候', ans: 'ちょうこう', d: ['さいん', 'きざし', 'まえぶれ'] },
+                { phrase: '腸内', ans: 'ちょうない', d: ['おなか', 'からだ', 'へるす'] },
+                { phrase: '低下', ans: 'ていか', d: ['だうん', 'さがる', 'へる'] },
+                { phrase: '底面', ans: 'ていめん', d: ['ぼとむ', 'そこ', 'べーす'] },
+                { phrase: '停止', ans: 'ていし', d: ['すとっぷ', 'とまる', 'ぽーず'] },
+                { phrase: '目的', ans: 'もくてき', d: ['たーげっと', 'ごーる', 'えいむ'] },
+                { phrase: '辞典', ans: 'じてん', d: ['じしょ', 'ぶっく', 'ほん'] },
+                // Lv.15
+                { phrase: '伝統', ans: 'でんとう', d: ['れきし', 'へんせん', 'しきたり'] },
+                { phrase: '生徒', ans: 'せいと', d: ['すちゅーでんと', 'がくせい', 'じどう'] },
+                { phrase: '努力', ans: 'どりょく', d: ['とらい', 'がんばり', 'べすと'] },
+                { phrase: '電灯', ans: 'でんとう', d: ['らいと', 'あかり', 'でんき'] },
+                { phrase: '食堂', ans: 'しょくどう', d: ['れすとらん', 'かふぇ', 'らんちるーむ'] },
+                { phrase: '労働', ans: 'ろうどう', d: ['わーく', 'しごと', 'はたらき'] },
+                { phrase: '特別', ans: 'とくべつ', d: ['すぺしゃる', 'れあ', 'ぷれみあむ'] },
+                { phrase: '得点', ans: 'とくてん', d: ['すこあ', 'ぽいんと', 'てんすう'] },
+                { phrase: '毒薬', ans: 'どくやく', d: ['ぽいずん', 'きけん', 'くすり'] },
+                { phrase: '観念', ans: 'かんねん', d: ['まいんど', 'かんがえ', 'かくご'] },
+                // Lv.16
+                { phrase: '梅干し', ans: 'うめぼし', d: ['おにぎり', 'すっぱい', 'つけもの'] },
+                { phrase: '博士', ans: 'はかせ', d: ['どくたー', 'ぷろふぇっさー', 'ものしり'] },
+                { phrase: 'ご飯', ans: 'ごはん', d: ['らいす', 'しょくじ', 'らんち'] },
+                { phrase: '飛行', ans: 'ひこう', d: ['ふらいと', 'とぶ', 'えあ'] },
+                { phrase: '費用', ans: 'ひよう', d: ['こすと', 'おかね', 'りょうきん'] },
+                { phrase: '必要', ans: 'ひつよう', d: ['ますと', 'だいじ', 'ようきゅう'] },
+                { phrase: '投票', ans: 'とうひょう', d: ['せんきょ', 'ぼーと', 'えらぶ'] },
+                { phrase: '標識', ans: 'ひょうしき', d: ['さいん', 'まーく', 'かんばん'] },
+                { phrase: '不可', ans: 'ふか', d: ['えぬじー', 'だめ', 'ばつ'] },
+                { phrase: '夫婦', ans: 'ふうふ', d: ['かっぷる', 'おとうさんおかあさん', 'かぞく'] },
+                // Lv.17
+                { phrase: '付近', ans: 'ふきん', d: ['ちかく', 'えりあ', 'まわり'] },
+                { phrase: '政府', ans: 'せいふ', d: ['がばめんと', 'こっかい', 'ないかく'] },
+                { phrase: '副官', ans: 'ふくかん', d: ['さぶ', 'あしすたんと', 'ぶか'] },
+                { phrase: '粉末', ans: 'ふんまつ', d: ['ぱうだー', 'こな', 'さらさら'] },
+                { phrase: '兵士', ans: 'へいし', d: ['そるじゃー', 'ないと', 'ぶたい'] },
+                { phrase: '別別', ans: 'べつべつ', d: ['ばらばら', 'そろ', 'ちがう'] },
+                { phrase: '辺り', ans: 'あたり', d: ['まわり', 'へん', 'えりあ'] },
+                { phrase: '変化', ans: 'へんか', d: ['ちぇんじ', 'へんしん', 'しふと'] },
+                { phrase: '包帯', ans: 'ほうたい', d: ['ばんでーじ', 'がーぜ', 'てあて'] },
+                { phrase: '法律', ans: 'ほうりつ', d: ['るーる', 'まなー', 'きそく'] },
+                // Lv.18
+                { phrase: '牧場', ans: 'ぼくじょう', d: ['ふぁーむ', 'うし', 'のはら'] },
+                { phrase: '週末', ans: 'しゅうまつ', d: ['うぃーくえんど', 'どにし', 'やすみ'] },
+                { phrase: '満員', ans: 'まんいん', d: ['ふる', 'ぎゅーぎゅー', 'いっぱい'] },
+                { phrase: '未来', ans: 'みらい', d: ['ふゅーちゃー', 'あす', 'しょうらい'] },
+                { phrase: '脈拍', ans: 'みゃくはく', d: ['はーとびーと', 'ぱるす', 'しんぞう'] },
+                { phrase: '国民', ans: 'こくみん', d: ['しみん', 'ぴーぷる', 'みんな'] },
+                { phrase: '無し', ans: 'なし', d: ['ぜろ', 'のー', 'あき'] },
+                { phrase: '運命', ans: 'うんめい', d: ['ですてぃにー', 'さだめ', 'みらい'] },
+                { phrase: '表面', ans: 'ひょうめん', d: ['とっぷ', 'おもて', 'ふぇーす'] },
+                { phrase: '門口', ans: 'かどぐち', d: ['いりぐち', 'げーと', 'かど'] },
+                // Lv.19
+                { phrase: '役員', ans: 'やくいん', d: ['りーだー', 'ぼすのなかま', 'かんぶ'] },
+                { phrase: '薬局', ans: 'やっきょく', d: ['どらっぐすとあ', 'くすりや', 'びょういん'] },
+                { phrase: '理由', ans: 'りゆう', d: ['わけ', 'げんいん', 'るーつ'] },
+                { phrase: '陸上', ans: 'りくじょう', d: ['とらっく', 'ぐらんど', 'ふぃーるど'] },
+                { phrase: '良好', ans: 'りょうこう', d: ['ぐっど', 'いいかんじ', 'おーけー'] },
+                { phrase: '冷却', ans: 'れいきゃく', d: ['ひやす', 'くーる', 'あいす'] },
+                { phrase: '履歴', ans: 'りれき', d: ['ひすとりー', 'ろぐ', 'きろく'] },
+                { phrase: '列車', ans: 'れっしゃ', d: ['とれいん', 'でんしゃ', 'きしゃ'] },
+                { phrase: '練習', ans: 'れんしゅう', d: ['ぷらくてぃす', 'とっくん', 'わーくあうと'] },
+                { phrase: '録音', ans: 'ろくおん', d: ['れこーでぃんぐ', 'おと', 'ぼいす'] },
+                // Lv.20
+                { phrase: '王冠', ans: 'おうかん', d: ['くらうん', 'きんぐ', 'ごーるど'] },
+                { phrase: '新章', ans: 'しんしょう', d: ['ちゃぷたー', 'あたらしさ', 'すたーと'] },
+                { phrase: '突破', ans: 'とっぱ', d: ['ぶれいく', 'くりあ', 'げっと'] },
+                { phrase: '覚悟', ans: 'かくご', d: ['まいんど', 'けっしん', 'はーと'] },
+                { phrase: '栄光', ans: 'えいこう', d: ['ぐろーりー', 'うぃなー', 'ほまれ'] },
+                { phrase: '躍進', ans: 'やくしん', d: ['じゃんぷ', 'すてっぷあっぷ', 'だいかつやく'] },
+                { phrase: '勝利', ans: 'しょうり', d: ['ういん', 'びくとりー', 'とろふぃー'] },
+                { phrase: '覇者', ans: 'はしゃ', d: ['ちゃんぴおん', 'きんぐ', 'ごーるど'] },
+                { phrase: '殿堂', ans: 'でんどう', d: ['れじぇんど', 'でんどういり', 'ますたー'] },
+                { phrase: '完成', ans: 'かんせい', d: ['こんぷりーと', 'できた', 'ごーる'] },
+                // Lv.21
+                { phrase: '4年生マスター', ans: 'よんねんせいますたー', d: ['くりあ', 'はしゃ', 'ちゃんぴおん'] },
+                { phrase: 'カードGET', ans: 'かーどげっと', d: ['げっと', 'これくしょん', 'ずかん'] },
+                { phrase: '満点クリア', ans: 'まんてんくりあ', d: ['ごーるど', 'ひゃくてん', 'かんぺき'] },
+                { phrase: '漢字マスター', ans: 'かんじますたー', d: ['はかせ', 'たつじん', 'ぷろ'] },
+                { phrase: '全問せいかい', ans: 'ぜんもんせいかい', d: ['ぱーふぇくと', 'ごーるど', 'かんぺき'] },
+                { phrase: 'ゴールド獲得', ans: 'ごーるどかくとく', d: ['きんめだる', 'とろふぃー', 'くりあ'] },
+                { phrase: '全レベル達成', ans: 'ぜんれべるたっせい', d: ['こんぷりーと', 'せいは', 'ますたー'] },
+                { phrase: '最強チャレンジャー', ans: 'さいきょうちゃれんじゃー', d: ['ちゃんぴおん', 'むてき', 'いちばん'] },
+                { phrase: '殿堂入り達成', ans: 'でんどういりたっせい', d: ['れじぇんど', 'ごーるど', 'はしゃ'] },
+                { phrase: '4年生カンペキ', ans: 'よんねんせいかんぺき', d: ['こんぷ', 'せいは', 'ますたー'] }
+            ],
+            5: [
+                // Lv.1
+                { phrase: '水圧', ans: 'すいあつ', d: ['きあつ', 'ふうあつ', 'でんあつ'] },
+                { phrase: '移動', ans: 'いどう', d: ['てんきん', 'ひっこし', 'へんこう'] },
+                { phrase: '原因', ans: 'げんいん', d: ['けっか', 'りゆう', 'きっかけ'] },
+                { phrase: '永久', ans: 'えいきゅう', d: ['いっとき', 'かんぜん', 'えいえん'] },
+                { phrase: '営業', ans: 'えいぎょう', d: ['きゅうぎょう', 'かいてん', 'へいてん'] },
+                { phrase: '衛星', ans: 'えいせい', d: ['わくせい', 'すいせい', 'いんせき'] },
+                { phrase: '貿易', ans: 'ぼうえき', d: ['ゆしゅつ', 'ゆにゅう', 'こうかん'] },
+                { phrase: '利益', ans: 'りえき', d: ['そんしつ', 'もうけ', 'しゅうにゅう'] },
+                { phrase: '液体', ans: 'えきたい', d: ['こたい', 'きたい', 'じゅんすい'] },
+                { phrase: '応援', ans: 'おうえん', d: ['かんせい', 'さんか', 'きょうりょく'] },
+                // Lv.2
+                { phrase: '往復', ans: 'おうふく', d: ['かたみち', 'さんぽ', 'たび'] },
+                { phrase: '桜花', ans: 'おうか', d: ['さくら', 'はなみ', 'はな'] },
+                { phrase: '恩恵', ans: 'おんけい', d: ['おかげ', 'めぐみ', 'ごほうび'] },
+                { phrase: '可能', ans: 'かのう', d: ['ふかのう', 'できる', 'おーけー'] },
+                { phrase: '仮定', ans: 'かてい', d: ['もしも', 'るーる', 'よそう'] },
+                { phrase: '価格', ans: 'かかく', d: ['ねだん', 'こすと', 'ぷらいす'] },
+                { phrase: '河川', ans: 'かせん', d: ['かわ', 'みずうみ', 'ながれ'] },
+                { phrase: '過去', ans: 'かこ', d: ['みらい', 'いま', 'むかし'] },
+                { phrase: '祝賀', ans: 'しゅくが', d: ['おいわい', 'ぱーてぃー', 'せれもにー'] },
+                { phrase: '快晴', ans: 'かいせい', d: ['いいてんき', 'はれ', 'あおぞら'] },
+                // Lv.3
+                { phrase: '解決', ans: 'かいけつ', d: ['くりあ', 'おーけー', 'できた'] },
+                { phrase: '格好', ans: 'かっこう', d: ['すたいる', 'みため', 'るっくす'] },
+                { phrase: '確実', ans: 'かくじつ', d: ['ますと', 'ぜったい', 'おーけー'] },
+                { phrase: '金額', ans: 'きんがく', d: ['おかね', 'ぷらいす', 'だいきん'] },
+                { phrase: '刊行', ans: 'かんこう', d: ['はっこう', 'しゅっぱん', 'ほん'] },
+                { phrase: '幹部', ans: 'かんぶ', d: ['りーだー', 'じょうし', 'やくいん'] },
+                { phrase: '習慣', ans: 'しゅうかん', d: ['るーてぃん', 'くせ', 'まなー'] },
+                { phrase: '眼鏡', ans: 'めがね', d: ['こんたくと', 'ぐらす', 'れんず'] },
+                { phrase: '基地', ans: 'きち', d: ['べーす', 'はうす', 'すぽっと'] },
+                { phrase: '寄付', ans: 'きふ', d: ['ぼきん', 'ぷれぜんと', 'しえん'] },
+                // Lv.4
+                { phrase: '規制', ans: 'きせい', d: ['るーる', 'せいげん', 'すとっぷ'] },
+                { phrase: '技術', ans: 'ぎじゅつ', d: ['すきる', 'てくにっく', 'わざ'] },
+                { phrase: '正義', ans: 'せいぎ', d: ['ひーろー', 'ただしい', 'じゃすてぃす'] },
+                { phrase: '逆流', ans: 'ぎゃくりゅう', d: ['ぎゃく', 'もどる', 'ちぇんじ'] },
+                { phrase: '久遠', ans: 'くおん', d: ['えいえん', 'ずっと', 'むかし'] },
+                { phrase: '旧家', ans: 'きゅうか', d: ['ふるいいえ', 'じたく', 'やしき'] },
+                { phrase: '居間', ans: 'いま', d: ['りびんぐ', 'へや', 'おざしき'] },
+                { phrase: '巨大', ans: 'きょだい', d: ['びっぐ', 'でかい', 'めが'] },
+                { phrase: '清潔', ans: 'せいけつ', d: ['くりーん', 'ぴかぴか', 'きれい'] },
+                { phrase: '条件', ans: 'じょうけん', d: ['るーる', 'くりあじょうけん', 'ますと'] },
+                // Lv.5
+                { phrase: '券面', ans: 'けんめん', d: ['ちけっと', 'おもて', 'ぱす'] },
+                { phrase: '危険', ans: 'きけん', d: ['ぴんち', 'でんじゃー', 'あぶない'] },
+                { phrase: '検査', ans: 'けんさ', d: ['ちぇっく', 'てすと', 'しらべ'] },
+                { phrase: '限界', ans: 'げんかい', d: ['りみっと', 'ぎりぎり', 'らすと'] },
+                { phrase: '現状', ans: 'げんじょう', d: ['いま', 'すたーたす', 'じょうたい'] },
+                { phrase: '減少', ans: 'げんしょう', d: ['へる', 'だうん', 'かっと'] },
+                { phrase: '事故', ans: 'じこ', d: ['あくしでんと', 'とらぶる', 'じけん'] },
+                { phrase: '個別', ans: 'こべつ', d: ['まんつーまん', 'ひとりひとり', 'そろ'] },
+                { phrase: '保護', ans: 'ほご', d: ['がーど', 'ぷろてくと', 'まもる'] },
+                { phrase: '効率', ans: 'こうりつ', d: ['すぴーど', 'すむーず', 'べすと'] },
+                // Lv.6
+                { phrase: '厚い', ans: 'あつい', d: ['うすい', 'おもい', 'かるい'] },
+                { phrase: '耕作', ans: 'こうさく', d: ['たがやす', 'のうぎょう', 'はたけ'] },
+                { phrase: '鉱山', ans: 'こうざん', d: ['やま', 'まいん', 'どうくつ'] },
+                { phrase: '構造', ans: 'こうぞう', d: ['しくみ', 'つくり', 'でざいん'] },
+                { phrase: '興奮', ans: 'こうふん', d: ['わくわく', 'えきさいと', 'てんしょん'] },
+                { phrase: '講演', ans: 'こうえん', d: ['すぴーち', 'はなし', 'せみなー'] },
+                { phrase: '報告', ans: 'ほうこく', d: ['れぽーと', 'おしらせ', 'でんたつ'] },
+                { phrase: '混乱', ans: 'こんらん', d: ['ぱにっく', 'ごちゃごちゃ', 'とらぶる'] },
+                { phrase: '調査', ans: 'ちょうさ', d: ['りさーち', 'しらべ', 'ちぇっく'] },
+                { phrase: '経済', ans: 'けいざい', d: ['えこのみー', 'おかね', 'びじねす'] },
+                // Lv.7
+                { phrase: '災害', ans: 'さいがい', d: ['じしん', 'たいふう', 'とらぶる'] },
+                { phrase: '夫妻', ans: 'ふさい', d: ['ふうふ', 'かっぷる', 'かぞく'] },
+                { phrase: '採用', ans: 'さいよう', d: ['げっと', 'ぱす', 'おーけー'] },
+                { phrase: '祭日', ans: 'さいじつ', d: ['しゅくじつ', 'やすみ', 'いべんと'] },
+                { phrase: '国際', ans: 'こくさい', d: ['ぐろーばる', 'せかい', 'わーるど'] },
+                { phrase: '在庫', ans: 'ざいこ', d: ['すとっく', 'もの', 'あいてむ'] },
+                { phrase: '犯罪', ans: 'はんざい', d: ['くらいむ', 'わるいこと', 'えぬじー'] },
+                { phrase: '財産', ans: 'ざいさん', d: ['たから', 'おかね', 'あせっと'] },
+                { phrase: '坂道', ans: 'さかみち', d: ['すろーぷ', 'のぼり', 'くだり'] },
+                { phrase: '政策', ans: 'せいさく', d: ['ぷらん', 'せいじ', 'るーる'] },
+                // Lv.8
+                { phrase: '冊子', ans: 'さっし', d: ['ぶっく', 'ぱんふれっと', 'ほん'] },
+                { phrase: '雑音', ans: 'ざつおん', d: ['のいず', 'じゃまなおと', 'おと'] },
+                { phrase: '酸素', ans: 'さんそ', d: ['くうき', 'えあ', 'がす'] },
+                { phrase: '賛成', ans: 'さんせい', d: ['おーけー', 'いいね', 'ぐっど'] },
+                { phrase: '弁護士', ans: 'べんごし', d: ['らいせんす', 'ほうりつ', 'せんもんか'] },
+                { phrase: '支持', ans: 'しじ', d: ['おうえん', 'さぽーと', 'ふぁん'] },
+                { phrase: '歴史', ans: 'れきし', d: ['ひすとりー', 'むかし', 'でんとう'] },
+                { phrase: '意志', ans: 'いし', d: ['まいんど', 'はーと', 'おもい'] },
+                { phrase: '実施', ans: 'じっし', d: ['じっこう', 'すたーと', 'やる'] },
+                { phrase: '医師', ans: 'いし', d: ['どくたー', 'いしゃ', 'びょういん'] },
+                // Lv.9
+                { phrase: '資産', ans: 'しさん', d: ['たから', 'おかね', 'ざいさん'] },
+                { phrase: '飼育', ans: 'しいく', d: ['そだてる', 'せわ', 'ぺっと'] },
+                { phrase: '指示', ans: 'しじ', d: ['おーだー', 'あどばいす', 'こまんど'] },
+                { phrase: '類似', ans: 'るいじ', d: ['にている', 'そっくり', 'おなじ'] },
+                { phrase: '自由', ans: 'じゆう', d: ['ふりー', 'おまかせ', 'じざい'] },
+                { phrase: '知識', ans: 'ちしき', d: ['ものしり', 'のうはう', 'べんきょう'] },
+                { phrase: '品質', ans: 'ひんしつ', d: ['くおりてぃ', 'ぐれーど', 'らんく'] },
+                { phrase: '校舎', ans: 'こうしゃ', d: ['がっこう', 'たてもの', 'びる'] },
+                { phrase: '感謝', ans: 'かんしゃ', d: ['さんくす', 'ありがとう', 'おれい'] },
+                { phrase: '授業', ans: 'じゅぎょう', d: ['れっすん', 'がくしゅう', 'くらす'] },
+                // Lv.10
+                { phrase: '述語', ans: 'じゅつご', d: ['ぶんぽう', 'ことば', 'こくご'] },
+                { phrase: '手術', ans: 'しゅじゅつ', d: ['おぺ', 'ちりょう', 'いりょう'] },
+                { phrase: '準備', ans: 'じゅんび', d: ['せっとあっぷ', 'すたんばい', 'ようい'] },
+                { phrase: '順序', ans: 'じゅんじょ', d: ['じゅんばん', 'すてっぷ', 'こーす'] },
+                { phrase: '陛下', ans: 'へいか', d: ['きんぐ', 'ろいやる', 'さま'] },
+                { phrase: '障害', ans: 'しょうがい', d: ['はーどる', 'じゃま', 'とらぶる'] },
+                { phrase: '昭和', ans: 'しょうわ', d: ['じだい', 'むかし', 'へいせい'] },
+                { phrase: '照らす', ans: 'てらす', d: ['らいと', 'あてる', 'ひかる'] },
+                { phrase: '賞状', ans: 'しょうじょう', d: ['しょう', 'ひょうしょう', 'とろふぃー'] },
+                { phrase: '大領', ans: 'たいりょう', d: ['びっぐ', 'えりあ', 'りょうど'] },
+                // Lv.11
+                { phrase: '税金', ans: 'ぜいきん', d: ['たっくす', 'おかね', 'しはらい'] },
+                { phrase: '舌先', ans: 'したさき', d: ['した', 'たん', 'おく'] },
+                { phrase: '姿勢', ans: 'しせい', d: ['ふぉーむ', 'ぽーず', 'せすじ'] },
+                { phrase: '説明', ans: 'せつめい', d: ['がいど', 'れくちゃー', 'かいせつ'] },
+                { phrase: '絶望', ans: 'ぜつぼう', d: ['ぴんち', 'しょっく', 'のー'] },
+                { phrase: '設定', ans: 'せってい', d: ['せっていんぐ', 'かすたま', 'おぷしょん'] },
+                { phrase: '金銭', ans: 'きんせん', d: ['おかね', 'まねー', 'きゃっしゅ'] },
+                { phrase: '専門', ans: 'せんもん', d: ['ぷろ', 'すぺしゃりすと', 'とくい'] },
+                { phrase: '禅定', ans: 'ぜんじょう', d: ['しずか', 'しゅうちゅう', 'まいんど'] },
+                { phrase: '線路', ans: 'せんろ', d: ['れーる', 'こーす', 'でんしゃ'] },
+                // Lv.12
+                { phrase: '改善', ans: 'かいぜん', d: ['あっぷ', 'ちゅーん', 'かいぜん'] },
+                { phrase: '祖父', ans: 'そふ', d: ['おじいちゃん', 'おとうさん', 'かぞく'] },
+                { phrase: '素朴', ans: 'そぼく', d: ['なちゅらる', 'しんぷる', 'やさしい'] },
+                { phrase: '総合', ans: 'そうごう', d: ['みっくす', 'とーたる', 'おーる'] },
+                { phrase: '製造', ans: 'せいぞう', d: ['めいく', 'つくる', 'こうじょう'] },
+                { phrase: '創造', ans: 'そうぞう', d: ['くりえいと', 'つくる', 'でざいん'] },
+                { phrase: '像面', ans: 'ぞうめん', d: ['いめーじ', 'がぞう', 'すくりーん'] },
+                { phrase: '増加', ans: 'ぞうか', d: ['あっぷ', 'ふえる', 'ぷらす'] },
+                { phrase: '走行', ans: 'そうこう', d: ['どらいぶ', 'らん', 'はしる'] },
+                { phrase: '測定', ans: 'そくてい', d: ['けいりょう', 'ちぇっく', 'てすと'] },
+                // Lv.13
+                { phrase: '側面', ans: 'そくめん', d: ['さいど', 'よこ', 'ぷろふぁいる'] },
+                { phrase: '規則', ans: 'きそく', d: ['るーる', 'まなー', 'きめて'] },
+                { phrase: '継続', ans: 'けいぞく', d: ['つづける', 'きーぷ', 'こんてぃにゅー'] },
+                { phrase: '発達', ans: 'はったつ', d: ['ぐろう', 'しんぽ', 'あっぷ'] },
+                { phrase: '隊員', ans: 'たいいん', d: ['めんばー', 'くるー', 'ちーむ'] },
+                { phrase: '貸出', ans: 'かしだし', d: ['れんたる', 'かす', 'さーびす'] },
+                { phrase: '退職', ans: 'たいしょく', d: ['りたいあ', 'やめる', 'そつぎょう'] },
+                { phrase: '状態', ans: 'じょうたい', d: ['すたーたす', 'こんでぃしょん', 'ようす'] },
+                { phrase: '集団', ans: 'しゅうだん', d: ['ぐるーぷ', 'ちーむ', 'くらす'] },
+                { phrase: '切断', ans: 'せつだん', d: ['かっと', 'きる', 'おふ'] },
+                // Lv.14
+                { phrase: '建築', ans: 'けんちく', d: ['つくる', 'びるでぃんぐ', 'こうじ'] },
+                { phrase: '主張', ans: 'しゅちょう', d: ['あぴーる', 'はつげん', 'いけん'] },
+                { phrase: '提案', ans: 'ていあん', d: ['あいであ', 'あいでぃあ', 'ぷらん'] },
+                { phrase: '程度', ans: 'ていど', d: ['れべる', 'くらい', 'らんく'] },
+                { phrase: '適当', ans: 'てきとう', d: ['ぴったり', 'ちょうどいい', 'ぐっど'] },
+                { phrase: '統一', ans: 'とういつ', d: ['ひとつにまとめる', 'みっくす', 'まとめ'] },
+                { phrase: '誘導', ans: 'ゆうどう', d: ['がいど', 'あんない', 'りーど'] },
+                { phrase: '銅貨', ans: 'どうか', d: ['こいん', 'おかね', 'ぶろんず'] },
+                { phrase: '道徳', ans: 'どうとく', d: ['まなー', 'もらる', 'べんきょう'] },
+                { phrase: '独立', ans: 'どくりつ', d: ['そろ', 'じりつ', 'ひとりだち'] },
+                // Lv.15
+                { phrase: '担任', ans: 'たんにん', d: ['せんせい', 'りーだー', 'くらすのせんせい'] },
+                { phrase: '準備', ans: 'じゅんび', d: ['すたんばい', 'せっと', 'ようい'] },
+                { phrase: '非難', ans: 'ひなん', d: ['くれーむ', 'ちゅうい', 'だめだし'] },
+                { phrase: '比較', ans: 'ひかく', d: ['くらべる', 'ちぇっく', 'てすと'] },
+                { phrase: '批評', ans: 'ひひょう', d: ['れびゅー', 'こめんと', 'かんそう'] },
+                { phrase: '悲惨', ans: 'ひさん', d: ['たいへん', 'しょっく', 'かわいそう'] },
+                { phrase: '備品', ans: 'びひん', d: ['あいてむ', 'どうぐ', 'すとっく'] },
+                { phrase: '評価', ans: 'ひょうか', d: ['すこあ', 'らんく', 'れびゅー'] },
+                { phrase: '貧困', ans: 'ひんこん', d: ['まずしい', 'たいへん', 'のーまねー'] },
+                { phrase: '布告', ans: 'ふこく', d: ['おしらせ', 'あなうんす', 'せんげん'] },
+                // Lv.16
+                { phrase: '婦人', ans: 'ふじん', d: ['れでぃー', 'おんなのひと', 'まだむ'] },
+                { phrase: '武士', ans: 'ぶし', d: ['さむらい', 'ないと', 'せんし'] },
+                { phrase: '復活', ans: 'ふっかつ', d: ['りばいばる', 'りすぽーん', 'かむばっく'] },
+                { phrase: '複数', ans: 'ふくすう', d: ['たくさん', 'まるち', 'ふたついじょう'] },
+                { phrase: '仏教', ans: 'ぶっきょう', d: ['おしえ', 'しゅうきょう', 'れきし'] },
+                { phrase: '編集', ans: 'へんしゅう', d: ['えでぃっと', 'つくる', 'でざいん'] },
+                { phrase: '変化', ans: 'へんか', d: ['ちぇんじ', 'しふと', 'へんしん'] },
+                { phrase: '保管', ans: 'ほかん', d: ['きーぷ', 'せーぶ', 'ほぞん'] },
+                { phrase: '墓地', ans: 'ぼち', d: ['おはか', 'れいえん', 'めもりある'] },
+                { phrase: '豊作', ans: 'ほうさく', d: ['たくさんとれた', 'だいしゅうかく', 'はっぴー'] },
+                // Lv.17
+                { phrase: '防衛', ans: 'ぼうえい', d: ['がーど', 'でぃふぇんす', 'まもる'] },
+                { phrase: '望遠', ans: 'ぼうえん', d: ['ずーむ', 'とおくをみる', 'すこーぷ'] },
+                { phrase: '冒険', ans: 'ぼうけん', d: ['あどべんちゃー', 'くえすと', 'たび'] },
+                { phrase: '訪問', ans: 'ほうもん', d: ['あいにいく', 'たずねる', 'びじっと'] },
+                { phrase: '忘却', ans: 'ぼうきゃく', d: ['わすれる', 'するー', 'くりあ'] },
+                { phrase: '暴走', ans: 'ぼうそう', d: ['だっしゅ', 'ぼうそう', 'すぴーどいはん'] },
+                { phrase: '北極', ans: 'ほっきょく', d: ['こおりのせかい', 'さむい', 'のーす'] },
+                { phrase: '予約', ans: 'よやく', d: ['りざーぶ', 'ぶっく', 'やくそく'] },
+                { phrase: '輸入', ans: 'ゆにゅう', d: ['かいがいからかう', 'いんぽーと', 'とりいれ'] },
+                { phrase: '容易', ans: 'ようい', d: ['かんたん', 'いーじー', 'らく'] },
+                // Lv.18
+                { phrase: '溶岩', ans: 'ようがん', d: ['まぐま', 'かざん', 'あつい'] },
+                { phrase: '留守', ans: 'るす', d: ['いない', 'おるすばん', 'ふざい'] },
+                { phrase: '履歴', ans: 'りれき', d: ['ひすとりー', 'ろぐ', 'きろく'] },
+                { phrase: '陸上', ans: 'りくじょう', d: ['とらっく', 'ふぃーるど', 'すぽーつ'] },
+                { phrase: '輪郭', ans: 'りんかく', d: ['あうとらいん', 'かたち', 'ふれーむ'] },
+                { phrase: '制度', ans: 'せいど', d: ['しすてむ', 'るーる', 'しくみ'] },
+                { phrase: '領土', ans: 'りょうど', d: ['えりあ', 'くに', 'てりとりー'] },
+                { phrase: '良好', ans: 'りょうこう', d: ['ぐっど', 'いいかんじ', 'おーけー'] },
+                { phrase: '連合', ans: 'れんごう', d: ['ちーむ', 'あらいあんす', 'ぐるーぷ'] },
+                { phrase: '理想', ans: 'りそう', d: ['べすと', 'あこがれ', 'ぱーふぇくと'] },
+                // Lv.19
+                { phrase: '高度', ans: 'こうど', d: ['はいれべる', 'たかさ', 'あどばんす'] },
+                { phrase: '精密', ans: 'せいみつ', d: ['きっちり', 'はいてく', 'ぴったり'] },
+                { phrase: '探査', ans: 'たんさ', d: ['りさーち', 'さーち', 'たんけん'] },
+                { phrase: '分析', ans: 'ぶんせき', d: ['あなりしす', 'でーた', 'ちぇっく'] },
+                { phrase: '解明', ans: 'かいめい', d: ['わかる', 'くりあ', 'かいけつ'] },
+                { phrase: '実証', ans: 'じっしょう', d: ['てすと', 'しょうめい', 'かくにん'] },
+                { phrase: '検証', ans: 'けんしょう', d: ['ちぇっく', 'てすと', 'かくにん'] },
+                { phrase: '構築', ans: 'こうちく', d: ['びるど', 'つくる', 'でざいん'] },
+                { phrase: '推進', ans: 'すいしん', d: ['どらいぶ', 'すすめる', 'あぴーる'] },
+                { phrase: '成功', ans: 'せいこう', d: ['くりあ', 'ごーる', 'たっせい'] },
+                // Lv.20
+                { phrase: '統合', ans: 'とうごう', d: ['みっくす', 'まとめる', 'がったい'] },
+                { phrase: '飛躍', ans: 'ひやく', d: ['じゃんぷ', 'すてっぷあっぷ', 'やくしん'] },
+                { phrase: '克服', ans: 'こくふく', d: ['のりこえる', 'くりあ', 'げっと'] },
+                { phrase: '創出', ans: 'そうしゅつ', d: ['つくりだす', 'いのべーしょん', 'うむ'] },
+                { phrase: '展望', ans: 'てんぼう', d: ['びゅー', 'みらい', 'びじょん'] },
+                { phrase: '栄冠', ans: 'えいかん', d: ['とろふぃー', 'くらうん', 'ちゃんぴおん'] },
+                { phrase: '頂上', ans: 'ちょうじょう', d: ['とっぷ', 'ぴーく', 'てっぺん'] },
+                { phrase: '完結', ans: 'かんけつ', d: ['ふぃなーれ', 'ごーる', 'こんぷりーと'] },
+                { phrase: '覇者', ans: 'はしゃ', d: ['ちゃんぴおん', 'きんぐ', 'ごーるど'] },
+                { phrase: '殿堂入り', ans: 'でんどういり', d: ['れじぇんど', 'ますたー', 'きんめだる'] }
+            ],
+            6: [
+                // Lv.1
+                { phrase: '映画', ans: 'えいが', d: ['てれび', 'どらま', 'あにめ'] },
+                { phrase: '延期', ans: 'えんき', d: ['ちゅうし', 'けっせき', 'へんこう'] },
+                { phrase: '沿線', ans: 'えんせん', d: ['せんろ', 'えきまえ', 'どうろ'] },
+                { phrase: '自我', ans: 'じが', d: ['じぶん', 'こころ', 'せいしん'] },
+                { phrase: '灰色', ans: 'はいいろ', d: ['くろいろ', 'しろいろ', 'みずいろ'] },
+                { phrase: '改革', ans: 'かいかく', d: ['かいぞう', 'へんこう', 'あたらしさ'] },
+                { phrase: '内閣', ans: 'ないかく', d: ['せいふ', 'こっかい', 'ぎいん'] },
+                { phrase: '割引', ans: 'わりびき', d: ['ねびき', 'はんがく', 'ぷれぜんと'] },
+                { phrase: '危険', ans: 'きけん', d: ['あんぜん', 'ちゅうい', 'へいわ'] },
+                { phrase: '呼吸', ans: 'こきゅう', d: ['しんこうきゅう', 'いき', 'はい'] },
+                // Lv.2
+                { phrase: '幹部', ans: 'かんぶ', d: ['りーだー', 'やくいん', 'ぼす'] },
+                { phrase: '巻物', ans: 'まきもの', d: ['すいこう', 'ほん', 'すくろーる'] },
+                { phrase: '看板', ans: 'かんばん', d: ['さいん', 'ぼーど', 'おしらせ'] },
+                { phrase: '簡単', ans: 'かんたん', d: ['いーじー', 'らく', 'しんぷる'] },
+                { phrase: '危機', ans: 'きき', d: ['ぴんち', 'でんじゃー', 'あぶない'] },
+                { phrase: '机上', ans: 'きじょう', d: ['つくえのうえ', 'ですく', 'のーと'] },
+                { phrase: '指揮', ans: 'しき', d: ['たくと', 'りーだー', 'まえすとろ'] },
+                { phrase: '貴重', ans: 'きちょう', d: ['れあ', 'だいじ', 'ぷれみあむ'] },
+                { phrase: '疑惑', ans: 'ぎわく', d: ['はてな', 'あやしい', 'うたがい'] },
+                { phrase: '呼吸', ans: 'こきゅう', d: ['ぶれす', 'いき', 'はい'] },
+                // Lv.3
+                { phrase: '提供', ans: 'ていきょう', d: ['ぎぶ', 'ぷれぜんと', 'さぽーと'] },
+                { phrase: '胸囲', ans: 'きょうい', d: ['むねのさいず', 'からだ', 'ちぇすと'] },
+                { phrase: '故郷', ans: 'ふるさと', d: ['じもと', 'ほーむ', 'いなか'] },
+                { phrase: '勤務', ans: 'きんむ', d: ['しごと', 'わーく', 'はたらき'] },
+                { phrase: '筋肉', ans: 'きんにく', d: ['まっする', 'ぱわー', 'からだ'] },
+                { phrase: '敬意', ans: 'けいい', d: ['りすぺくと', 'そんけい', 'まなー'] },
+                { phrase: '系統', ans: 'けいとう', d: ['ぐるーぷ', 'らいん', 'かてごり'] },
+                { phrase: '警察', ans: 'けいさつ', d: ['ぽりす', 'こうばん', 'ぱとかー'] },
+                { phrase: '劇場', ans: 'げきじょう', d: ['しあたー', 'すてーじ', 'ほーる'] },
+                { phrase: '激しい', ans: 'はげしい', d: ['はーど', 'つよい', 'わいるど'] },
+                // Lv.4
+                { phrase: '穴あけ', ans: 'あなあけ', d: ['ぱんち', 'どりる', 'こうぐ'] },
+                { phrase: '絹糸', ans: 'きぬいと', d: ['しるく', 'いと', 'けいと'] },
+                { phrase: '権利', ans: 'けんり', d: ['らいせんす', 'おーけー', 'ぱす'] },
+                { phrase: '憲法', ans: 'けんぽう', d: ['ほうりつ', 'るーる', 'くにのきまり'] },
+                { phrase: '源流', ans: 'げんりゅう', d: ['すたーと', 'るーつ', 'はじめ'] },
+                { phrase: '厳重', ans: 'げんじゅう', d: ['がーど', 'きっちり', 'せきゅりてぃ'] },
+                { phrase: '自己', ans: 'じこ', d: ['じぶん', 'せるふ', 'まい'] },
+                { phrase: '呼出', ans: 'よびだし', d: ['こーる', 'あなうんす', 'よびかけ'] },
+                { phrase: '誤解', ans: 'ごかい', d: ['かんちがい', 'みす', 'すれちがい'] },
+                { phrase: '皇后', ans: 'こうごう', d: ['ろいやる', 'さま', 'こうごうへいか'] },
+                // Lv.5
+                { phrase: '孝行', ans: 'こうこう', d: ['おやこうこう', 'やさしさ', 'おれい'] },
+                { phrase: '皇居', ans: 'こうきょ', d: ['おしろ', 'ぱれす', 'こうしつ'] },
+                { phrase: '紅葉', ans: 'こうよう', d: ['もみじ', 'あかいはっぱ', 'あき'] },
+                { phrase: '降車', ans: 'こうしゃ', d: ['おりる', 'あうと', 'ばすてい'] },
+                { phrase: '鋼鉄', ans: 'こうてつ', d: ['すちーる', 'てつ', 'めたる'] },
+                { phrase: '刻印', ans: 'こくいん', d: ['すたんぷ', 'まーく', 'きざむ'] },
+                { phrase: '穀物', ans: 'こくもつ', d: ['おこめ', 'むぎ', 'しりある'] },
+                { phrase: '骨折', ans: 'こっせつ', d: ['けが', 'ぎぶす', 'ほね'] },
+                { phrase: '困難', ans: 'こんなん', d: ['はーど', 'ぴんち', 'むずかしい'] },
+                { phrase: '砂漠', ans: 'さばく', d: ['でざーと', 'すな', 'あつの'] },
+                // Lv.6
+                { phrase: '座席', ans: 'ざせき', d: ['しーと', 'いす', 'ぷれみあむ'] },
+                { phrase: '救済', ans: 'きゅうさい', d: ['たすける', 'れすきゅー', 'さぽーと'] },
+                { phrase: '裁判', ans: 'さいばん', d: ['こーと', 'ほうりつ', 'じゃっじ'] },
+                { phrase: '対策', ans: 'たいさく', d: ['あいであ', 'ぷらん', 'そりゅーしょん'] },
+                { phrase: '冊子', ans: 'さっし', d: ['ぶっく', 'ほん', 'さっし'] },
+                { phrase: '姿勢', ans: 'しせい', d: ['ふぉーむ', 'ぽーず', 'せすじ'] },
+                { phrase: '宗教', ans: 'しゅうきょう', d: ['おしえ', 'ぶんか', 'れきし'] },
+                { phrase: '就職', ans: 'しゅうしょく', d: ['しごとにつく', 'きゃりあ', 'にゅうしゃ'] },
+                { phrase: '観衆', ans: 'かんしゅう', d: ['おーでぃえんす', 'かんきゃく', 'ふぁん'] },
+                { phrase: '従事', ans: 'じゅうじ', d: ['はたらく', 'わーく', 'さんか'] },
+                // Lv.7
+                { phrase: '縦断', ans: 'じゅうだん', d: ['とおる', 'くろす', 'まっすぐ'] },
+                { phrase: '縮小', ans: 'しゅくしょう', d: ['すもーる', 'ちいさくする', 'だうん'] },
+                { phrase: '熟練', ans: 'じゅくれん', d: ['ぷろ', 'べてらん', 'えきすぱーと'] },
+                { phrase: '純粋', ans: 'じゅんすい', d: ['ぴゅあ', 'きれい', 'くりあ'] },
+                { phrase: '処理', ans: 'しょり', d: ['ぷろせす', 'かたづけ', 'こなす'] },
+                { phrase: '警察署', ans: 'けいさつしょ', d: ['ぽりす', 'こうばん', 'おふぃす'] },
+                { phrase: '諸般', ans: 'しょはん', d: ['いろいろ', 'さまざま', 'じじょう'] },
+                { phrase: '解除', ans: 'かいじょ', d: ['りりーす', 'おふ', 'かいじょ'] },
+                { phrase: '将来', ans: 'しょうらい', d: ['みらい', 'ふゅーちゃー', 'ゆめ'] },
+                { phrase: '傷口', ans: 'きずぐち', d: ['けが', 'ばんどえいど', 'だめーじ'] },
+                // Lv.8
+                { phrase: '故障', ans: 'こしょう', d: ['とらぶる', 'ぶろーくん', 'ばぐ'] },
+                { phrase: '城郭', ans: 'じょうかく', d: ['おしろ', 'きゃっする', 'へい'] },
+                { phrase: '蒸気', ans: 'じょうき', d: ['すちーむ', 'ゆげ', 'あつあつ'] },
+                { phrase: '針路', ans: 'しんろ', d: ['こーす', 'みち', 'こんぱす'] },
+                { phrase: '仁義', ans: 'じんぎ', d: ['まなー', 'おもいやり', 'やくそく'] },
+                { phrase: '垂直', ans: 'すいちょく', d: ['まっすぐ', 'きゅうじゅうど', 'たて'] },
+                { phrase: '推定', ans: 'すいてい', d: ['よそう', 'すいろん', 'ちぇっく'] },
+                { phrase: '1寸', ans: 'いっすん', d: ['みじかい', 'さいず', 'せんち'] },
+                { phrase: '崇高', ans: 'すうこう', d: ['すばらしい', 'えらい', 'さいこう'] },
+                { phrase: '創刊', ans: 'そうかん', d: ['すたーと', 'しんはつばい', 'はっこう'] },
+                // Lv.9
+                { phrase: '温泉', ans: 'おんせん', d: ['すぱ', 'おふろ', 'せんとう'] },
+                { phrase: '浅い', ans: 'あさい', d: ['ふかい', 'ひくい', 'ちかい'] },
+                { phrase: '善悪', ans: 'ぜんあく', d: ['いいわるい', 'じゃっじ', 'るーる'] },
+                { phrase: '演奏', ans: 'えんそう', d: ['ぷれい', 'らいぶ', 'せっしょん'] },
+                { phrase: '操作', ans: 'そうさ', d: ['こんとろーる', 'ぷれい', 'こまんど'] },
+                { phrase: '窓口', ans: 'まどぐち', d: ['かうんたー', 'うけつけ', 'ふろんと'] },
+                { phrase: '混乱', ans: 'こんらん', d: ['ぱにっく', 'ごちゃごちゃ', 'とらぶる'] },
+                { phrase: '創造', ans: 'そうぞう', d: ['くりえいと', 'でざいん', 'うみだす'] },
+                { phrase: '金庫', ans: 'きんこ', d: ['せーふてぃ', 'おかね', 'ろっく'] },
+                { phrase: '心臓', ans: 'しんぞう', d: ['はーと', 'むね', 'からだ'] },
+                // Lv.10
+                { phrase: '痛快', ans: 'つうかい', d: ['すかっとする', 'たのしい', 'さいこう'] },
+                { phrase: '尊敬', ans: 'そんけい', d: ['りすぺくと', 'あこがれ', 'すごい'] },
+                { phrase: '退職', ans: 'たいしょく', d: ['りたいあ', 'やめる', 'そつぎょう'] },
+                { phrase: '探検', ans: 'たんけん', d: ['あどべんちゃー', 'くえすと', 'たんきゅう'] },
+                { phrase: '誕生', ans: 'たんじょう', d: ['ばーすでー', 'うまれる', 'すたーと'] },
+                { phrase: '段階', ans: 'だんかい', d: ['すてっぷ', 'れべる', 'ふぇーず'] },
+                { phrase: '暖房', ans: 'だんぼう', d: ['ひーたー', 'あたたかい', 'えあこん'] },
+                { phrase: '価値', ans: 'かち', d: ['ばりゅー', 'れあ', 'たから'] },
+                { phrase: '宇宙', ans: 'うちゅう', d: ['すぺーす', 'ほし', 'ぎんが'] },
+                { phrase: '忠実', ans: 'ちゅうじつ', d: ['まじめ', 'りある', 'そのまま'] },
+                // Lv.11
+                { phrase: '著書', ans: 'ちょしょ', d: ['ほん', 'ぶっく', 'さくひん'] },
+                { phrase: '官庁', ans: 'かんちょう', d: ['やくしょ', 'せいふ', 'びる'] },
+                { phrase: '頂上', ans: 'ちょうじょう', d: ['とっぷ', 'ぴーく', 'てっぺん'] },
+                { phrase: '潮風', ans: 'しおかぜ', d: ['うみのかぜ', 'そよかぜ', 'まりん'] },
+                { phrase: '賃金', ans: 'ちんぎん', d: ['きゅうりょう', 'おかね', 'まねー'] },
+                { phrase: '痛感', ans: 'つうかん', d: ['すごくかんじる', 'わかる', 'しょっく'] },
+                { phrase: '展示', ans: 'てんじ', d: ['でぃすぷれい', 'しょう', 'みせる'] },
+                { phrase: '討論', ans: 'とうろん', d: ['でぃべーと', 'はなしあい', 'みーてぃんぐ'] },
+                { phrase: '政党', ans: 'せいとう', d: ['ぐるーぷ', 'せいじ', 'とう'] },
+                { phrase: '砂糖', ans: 'さとう', d: ['しゅがー', 'あまい', 'ちょうみりょう'] },
+                // Lv.12
+                { phrase: '届出', ans: 'とどけで', d: ['てつづき', 'おしらせ', 'ていしゅつ'] },
+                { phrase: '困難', ans: 'こんなん', d: ['はーど', 'ぴんち', 'むずかしい'] },
+                { phrase: '乳児', ans: 'にゅうじ', d: ['あかちゃん', 'べびー', 'こども'] },
+                { phrase: '認識', ans: 'にんしき', d: ['わかる', 'ちぇっく', 'ますたー'] },
+                { phrase: '納品', ans: 'のうひん', d: ['とどける', 'でりばりー', 'おさめる'] },
+                { phrase: '脳裏', ans: 'のうり', d: ['あたま', 'こころ', 'きおく'] },
+                { phrase: '派閥', ans: 'はばつ', d: ['ぐるーぷ', 'ちーむ', 'とう'] },
+                { phrase: '拝見', ans: 'はいけん', d: ['みる', 'ちぇっく', 'けんがく'] },
+                { phrase: '背景', ans: 'はいけい', d: ['ばっく', 'りばーす', 'けしき'] },
+                { phrase: '肺炎', ans: 'はいえん', d: ['びょうき', 'はい', 'ねつ'] },
+                // Lv.13
+                { phrase: '俳句', ans: 'はいく', d: ['せんりゅう', 'うた', 'ごしちご'] },
+                { phrase: '班長', ans: 'はんちょう', d: ['りーだー', 'きゃぷてん', 'はんちょう'] },
+                { phrase: '晩御飯', ans: 'ばんごはん', d: ['でぃなー', 'ばんめし', 'ゆうしょく'] },
+                { phrase: '否定', ans: 'ひてい', d: ['えぬじー', 'いいえ', 'きっぱり'] },
+                { phrase: '批判', ans: 'ひはん', d: ['れびゅー', 'ちぇっく', 'いけん'] },
+                { phrase: '秘密', ans: 'ひみつ', d: ['しーくれっと', 'ないしょ', 'ひみつ'] },
+                { phrase: '腹痛', ans: 'ふくつう', d: ['おなかいたい', 'びょうき', 'いたみ'] },
+                { phrase: '奮闘', ans: 'ふんとう', d: ['ふぁいと', 'べすとをつくす', 'がんばり'] },
+                { phrase: '盛大', ans: 'せいだい', d: ['びっぐ', 'はで', 'にぎやか'] },
+                { phrase: '同盟', ans: 'どうめい', d: ['あらいあんす', 'ちーむ', 'ぱーとなー'] },
+                // Lv.14
+                { phrase: '模型', ans: 'もけい', d: ['ぷらもでる', 'みにちゅあ', 'もでる'] },
+                { phrase: '模範', ans: 'もはん', d: ['おてほん', 'べすと', 'ぱーふぇくと'] },
+                { phrase: '訳語', ans: 'やくご', d: ['ほんやく', 'ことば', 'いみ'] },
+                { phrase: '郵送', ans: 'ゆうそう', d: ['ぽすと', 'めーる', 'とどける'] },
+                { phrase: '優勢', ans: 'ゆうせい', d: ['りーど', 'かちそう', 'つよい'] },
+                { phrase: '幼年', ans: 'ようねん', d: ['おさない', 'きっず', 'こども'] },
+                { phrase: '欲望', ans: 'よくぼう', d: ['ほしい', 'ねがい', 'たーげっと'] },
+                { phrase: '容易', ans: 'ようい', d: ['かんたん', 'いーじー', 'らく'] },
+                { phrase: '了解', ans: 'りょうかい', d: ['らじゃー', 'おーけー', 'わかる'] },
+                { phrase: '領域', ans: 'りょういき', d: ['えりあ', 'ぞーん', 'てりとりー'] },
+                // Lv.15
+                { phrase: '混乱', ans: 'こんらん', d: ['ぱにっく', 'ごちゃごちゃ', 'とらぶる'] },
+                { phrase: '乱暴', ans: 'らんぼう', d: ['わいるど', 'あぶない', 'あらい'] },
+                { phrase: '卵黄', ans: 'らんおう', d: ['きみ', 'たまご', 'いえろー'] },
+                { phrase: '理由', ans: 'りゆう', d: ['わけ', 'げんいん', 'るーつ'] },
+                { phrase: '履歴', ans: 'りれき', d: ['ひすとりー', 'ろぐ', 'きろく'] },
+                { phrase: '律義', ans: 'りちぎ', d: ['まじめ', 'きっちり', 'しんせつ'] },
+                { phrase: '臨時', ans: 'りんじ', d: ['すぺしゃる', 'きゅうきょ', 'いべんと'] },
+                { phrase: '熟慮', ans: 'じゅくりょ', d: ['よくかんがえる', 'でぃーぷ', 'しこう'] },
+                { phrase: '関連', ans: 'かんれん', d: ['りんく', 'つながり', 'あいだ'] },
+                { phrase: '論文', ans: 'ろんぶん', d: ['れぽーと', 'けんきゅう', 'ほん'] },
+                // Lv.16
+                { phrase: '高度', ans: 'こうど', d: ['はいれべる', 'たかさ', 'あどばんす'] },
+                { phrase: '難解', ans: 'なんかい', d: ['むずかしい', 'はーど', 'ぱずる'] },
+                { phrase: '克服', ans: 'こくふく', d: ['くりあ', 'のりこえる', 'げっと'] },
+                { phrase: '分析', ans: 'ぶんせき', d: ['あなりしす', 'でーた', 'ちぇっく'] },
+                { phrase: '洞察', ans: 'どうさつ', d: ['みぬく', 'せんす', 'いんさいと'] },
+                { phrase: '考察', ans: 'こうさつ', d: ['かんがえ', 'ぶんせき', 'ちぇっく'] },
+                { phrase: '推論', ans: 'すいろん', d: ['よそう', 'ろじっく', 'すいろん'] },
+                { phrase: '批判', ans: 'ひはん', d: ['れびゅー', 'ちぇっく', 'こめんと'] },
+                { phrase: '解明', ans: 'かいめい', d: ['わかる', 'くりあ', 'かいけつ'] },
+                { phrase: '証明', ans: 'しょうめい', d: ['えびでんす', 'てすと', 'あかす'] },
+                // Lv.17
+                { phrase: '探求', ans: 'たんきゅう', d: ['さーち', 'けんきゅう', 'たんけん'] },
+                { phrase: '創案', ans: 'そうあん', d: ['あいであ', 'はつめい', 'ぷらん'] },
+                { phrase: '発展', ans: 'はってん', d: ['ぐろう', 'しんぽ', 'あっぷ'] },
+                { phrase: '変革', ans: 'へんかく', d: ['ちぇんじ', 'いのべーしょん', 'かいかく'] },
+                { phrase: '推進', ans: 'すいしん', d: ['どらいぶ', 'すすめる', 'りーど'] },
+                { phrase: '実践', ans: 'じっせん', d: ['とらい', 'やる', 'じっこう'] },
+                { phrase: '達成', ans: 'たっせい', d: ['くりあ', 'ごーる', 'みっしょんこんぷりーと'] },
+                { phrase: '成就', ans: 'じょうじゅ', d: ['かなう', 'かなった', 'かんせい'] },
+                { phrase: '貢献', ans: 'こうけん', d: ['さぽーと', 'ぎぶ', 'やくにたつ'] },
+                { phrase: '飛躍', ans: 'ひやく', d: ['じゃんぷ', 'すてっぷあっぷ', 'だいしんぽ'] },
+                // Lv.18
+                { phrase: '精進', ans: 'しょうじん', d: ['がんばり', 'とっくん', 'とらい'] },
+                { phrase: '克服', ans: 'こくふく', d: ['のりこえる', 'くりあ', 'げっと'] },
+                { phrase: '勝利', ans: 'しょうり', d: ['びくとりー', 'ういん', 'ごーるど'] },
+                { phrase: '飛躍', ans: 'ひやく', d: ['じゃんぷ', 'すてっぷ', 'やくしん'] },
+                { phrase: '展開', ans: 'てんかい', d: ['おーぷん', 'すとーりー', 'すすむ'] },
+                { phrase: '到達', ans: 'とうたつ', d: ['りーち', 'ごーる', 'たっせい'] },
+                { phrase: '完成', ans: 'かんせい', d: ['こんぷりーと', 'できた', 'ごーる'] },
+                { phrase: '金字塔', ans: 'きんじとう', d: ['ぴらみっど', 'えらいきろく', 'とっぷ'] },
+                { phrase: '覇権', ans: 'はけん', d: ['ちゃんぴおん', 'なんばーわん', 'おうざ'] },
+                { phrase: '黄金', ans: 'おうごん', d: ['ごーるど', 'きらきら', 'ごーじゃす'] },
+                // Lv.19
+                { phrase: '栄光', ans: 'えいこう', d: ['ぐろーりー', 'ういなー', 'ほまれ'] },
+                { phrase: '偉業', ans: 'いぎょう', d: ['すごいこと', 'れじぇんど', 'きろく'] },
+                { phrase: '大成', ans: 'たいせい', d: ['せいこう', 'かんせい', 'びっぐ'] },
+                { phrase: '極致', ans: 'きょくち', d: ['てっぺん', 'とっぷ', 'くらいまっくす'] },
+                { phrase: '登頂', ans: 'とうちょう', d: ['ちょうじょう', 'ごーる', 'のぼりきる'] },
+                { phrase: '至高', ans: 'しこう', d: ['さいこう', 'なんばーわん', 'とっぷ'] },
+                { phrase: '無双', ans: 'むそう', d: ['むてき', 'さいきょう', 'いちばん'] },
+                { phrase: '万全', ans: 'ばんぜん', d: ['ぱーふぇくと', 'ばっちり', 'ひゃくぱーせんと'] },
+                { phrase: '熟達', ans: 'じゅくたつ', d: ['ぷろ', 'ますたー', 'えきすぱーと'] },
+                { phrase: '究極', ans: 'きゅうきょく', d: ['あるてぃめっと', 'らすと', 'さいこう'] },
+                // Lv.20
+                { phrase: '頂点', ans: 'ちょうてん', d: ['とっぷ', 'ぴーく', 'てっぺん'] },
+                { phrase: '覇者', ans: 'はしゃ', d: ['ちゃんぴおん', 'きんぐ', 'ごーるど'] },
+                { phrase: '殿堂', ans: 'でんどう', d: ['れじぇんど', 'でんどういり', 'ますたー'] },
+                { phrase: '完全制覇', ans: 'かんぜんせいは', d: ['おーるこんぷりーと', 'ひゃくぱーせんと', 'ごーるど'] },
+                { phrase: '神話', ans: 'しんわ', d: ['ろまん', 'でんせつ', 'おはなし'] },
+                { phrase: '創世', ans: 'そうせい', d: ['ばーす', 'くりえいと', 'はじまり'] },
+                { phrase: '全知全能', ans: 'ぜんちぜんのう', d: ['あるせうす', 'かみ', 'むてき'] },
+                { phrase: '光芒', ans: 'こうぼう', d: ['ひかり', 'おーら', 'びーむ'] },
+                { phrase: '永久', ans: 'えいきゅう', d: ['ずっと', 'いつまでも', 'えいえん'] },
+                { phrase: '無限', ans: 'むげん', d: ['いんふぃにてぃ', 'むりょう', 'どこまでも'] }
+            ]
+        };
+
+        // 学年ごとのシャッフルされた問題プール（あいうえお順による答えの推測を完全に防ぐ）
+        const shuffledGradePools = {};
+
+        function getShuffledPool(grade) {
+            if (!shuffledGradePools[grade]) {
+                const pool = [...(KANJI_DB[grade] || KANJI_DB[1])];
+                // 固定シード値を用いた擬似乱数シャッフルで、五十音順の偏りを解消
+                let seed = grade * 12345 + 6789;
+                const rng = () => {
+                    seed = (seed * 9301 + 49297) % 233280;
+                    return seed / 233280;
+                };
+                for (let i = pool.length - 1; i > 0; i--) {
+                    const j = Math.floor(rng() * (i + 1));
+                    [pool[i], pool[j]] = [pool[j], pool[i]];
+                }
+                shuffledGradePools[grade] = pool;
+            }
+            return shuffledGradePools[grade];
+        }
+
+        // 学年とレベルに応じた10問の問題リストを生成する関数
+        function generateKanjiQuestions(grade, level) {
+            const gradePool = getShuffledPool(grade);
+            const startIndex = (level - 1) * 10;
+            const result = [];
+
+            for (let i = 0; i < 10; i++) {
+                const item = gradePool[(startIndex + i) % gradePool.length];
+                
+                // 誤答候補をそのまま使用し、正解と合わせてシャッフル（重複・別の正しい読みの混入を完全防止）
+                const options = [item.ans, ...item.d.slice(0, 3)];
+                options.sort(() => Math.random() - 0.5);
+
+                result.push({
+                    phrase: item.phrase,
+                    answer: item.ans,
+                    options: options
+                });
+            }
+
+            // 10問の出題順もランダムにシャッフルして頭文字からの推測を防止
+            result.sort(() => Math.random() - 0.5);
+
+            return result;
+        }
+
+        // --- 3. ゲーム状態管理 ---
+
+        let gameState = {
+            unlockedLevels: { 1: [1], 2: [1], 3: [1], 4: [1], 5: [1], 6: [1] },
+            clearedRanks: { 1: {}, 2: {}, 3: {}, 4: {}, 5: {}, 6: {} },
+            ownedCards: [],
+            newCards: [],
+            currentGrade: 1,
+            currentLevel: 1,
+            currentQuestionIndex: 0,
+            lives: 3,
+            questions: []
+        };
+
+        let currentGrade = 1;
+        let currentLevel = 1;
+        let isProcessingAnswer = false;
+        let currentAlbumFilter = 'ALL';
+
+        function isFirstPhaseComplete() {
+            const p1Cards = POKEMON_CARDS.filter(c => ['C', 'U', 'R', 'RR'].includes(c.rarity));
+            return p1Cards.every(c => gameState.ownedCards.includes(c.id));
+        }
+
+        function updateCardCountDisplay() {
+            const countEl = document.getElementById('card-count');
+            if (!countEl) return;
+            
+            countEl.innerText = `${gameState.ownedCards.length}/60`;
+        }
+
+        // --- セーブ・ロード処理 ---
+        function saveData() {
+            try {
+                localStorage.setItem(SAVE_KEY, JSON.stringify({
+                    unlockedLevels: gameState.unlockedLevels,
+                    clearedRanks: gameState.clearedRanks,
+                    ownedCards: gameState.ownedCards,
+                    newCards: gameState.newCards
+                }));
+            } catch (e) {
+                console.error('Save error:', e);
+            }
+            updateCardCountDisplay();
+        }
+
+        function loadSaveData() {
+            try {
+                let saved = localStorage.getItem(SAVE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.unlockedLevels) gameState.unlockedLevels = parsed.unlockedLevels;
+                    if (parsed.clearedRanks) gameState.clearedRanks = parsed.clearedRanks;
+                    if (parsed.ownedCards) gameState.ownedCards = parsed.ownedCards;
+                    if (parsed.newCards) gameState.newCards = parsed.newCards;
+                }
+            } catch (e) {
+                console.error('Load error:', e);
+            }
+
+            for (let g = 1; g <= 6; g++) {
+                if (!gameState.unlockedLevels[g]) gameState.unlockedLevels[g] = [1];
+                if (!gameState.clearedRanks[g]) gameState.clearedRanks[g] = {};
+            }
+
+            updateCardCountDisplay();
+        }
+
+        // --- サウンド＆音声読み上げ（Web Audio API & SpeechSynthesis） ---
+        let audioCtx = null;
+        let bgmInterval = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) audioCtx = new AudioContext();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        document.addEventListener('pointerdown', () => { getAudioContext(); }, { once: false });
+
+        function playPinpon() {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+
+            const osc1 = ctx.createOscillator();
+            const gain1 = ctx.createGain();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(1046.50, now);
+            gain1.gain.setValueAtTime(0.3, now);
+            gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+            osc1.connect(gain1);
+            gain1.connect(ctx.destination);
+            osc1.start(now);
+            osc1.stop(now + 0.3);
+
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(1567.98, now + 0.15);
+            gain2.gain.setValueAtTime(0.3, now + 0.15);
+            gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+            osc2.start(now + 0.15);
+            osc2.stop(now + 0.5);
+        }
+
+        function playBuzzer() {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.setValueAtTime(120, now + 0.15);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        }
+
+        function playFanfare(isAllClear = false) {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+
+            const notes = isAllClear 
+                ? [523.25, 659.25, 783.99, 1046.50, 880.00, 1046.50, 1174.66, 1318.51]
+                : [523.25, 659.25, 783.99, 1046.50];
+
+            notes.forEach((freq, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                const startTime = now + idx * 0.12;
+                const duration = idx === notes.length - 1 ? 0.8 : 0.15;
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, startTime);
+                gain.gain.setValueAtTime(0.3, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            });
+        }
+
+        function playCompleteFanfare() {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+            const notes = [523.25, 659.25, 783.99, 1046.50, 1174.66, 1318.51, 1567.98, 1760.00, 2093.00];
+
+            notes.forEach((freq, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                const startTime = now + idx * 0.1;
+                const duration = idx === notes.length - 1 ? 1.5 : 0.2;
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, startTime);
+                gain.gain.setValueAtTime(0.35, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            });
+        }
+
+        function startBGM() {
+            stopBGM();
+            const ctx = getAudioContext();
+            if (!ctx) return;
+
+            const bassNotes = [130.81, 130.81, 164.81, 130.81, 146.83, 130.81, 123.47, 110];
+            const leadNotes = [523.25, 587.33, 659.25, 698.46, 659.25, 587.33, 523.25, 587.33];
+            let noteIdx = 0;
+
+            bgmInterval = setInterval(() => {
+                if (!audioCtx || audioCtx.state !== 'running') return;
+                const now = audioCtx.currentTime;
+
+                const bassOsc = audioCtx.createOscillator();
+                const bassGain = audioCtx.createGain();
+                bassOsc.type = 'triangle';
+                bassOsc.frequency.setValueAtTime(bassNotes[noteIdx % bassNotes.length], now);
+                bassGain.gain.setValueAtTime(0.06, now);
+                bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                bassOsc.connect(bassGain);
+                bassGain.connect(audioCtx.destination);
+                bassOsc.start(now);
+                bassOsc.stop(now + 0.12);
+
+                const leadOsc = audioCtx.createOscillator();
+                const leadGain = audioCtx.createGain();
+                leadOsc.type = 'sine';
+                leadOsc.frequency.setValueAtTime(leadNotes[noteIdx % leadNotes.length], now);
+                leadGain.gain.setValueAtTime(0.04, now);
+                leadGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+                leadOsc.connect(leadGain);
+                leadGain.connect(audioCtx.destination);
+                leadOsc.start(now);
+                leadOsc.stop(now + 0.14);
+
+                noteIdx++;
+            }, 180);
+        }
+
+        function stopBGM() {
+            if (bgmInterval) {
+                clearInterval(bgmInterval);
+                bgmInterval = null;
+            }
+        }
+
+        // 音声読み上げ停止の処理（ダミー化して一切再生しない）
+        function speakQuestion(phrase, kanji) {
+            return;
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-message');
+            if (!toast) return;
+            toast.innerText = msg;
+            toast.classList.remove('hidden', '-translate-y-2', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.add('-translate-y-2', 'opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 2500);
+        }
+
+        function switchGrade(grade) {
+            currentGrade = grade;
+            gameState.currentGrade = grade;
+            renderGradeTabs();
+            renderLevelGrid();
+        }
+
+        function renderGradeTabs() {
+            const container = document.getElementById('grade-tabs');
+            if (!container) return;
+            container.innerHTML = '';
+
+            for (let g = 1; g <= 6; g++) {
+                const btn = document.createElement('button');
+                const isActive = (g === currentGrade);
+
+                btn.className = `flex-1 min-w-[70px] py-2 px-2.5 rounded-xl font-black text-xs sm:text-sm transition-all ${
+                    isActive
+                        ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md border-2 border-white'
+                        : 'bg-white text-slate-700 hover:bg-slate-100 border border-indigo-100'
+                }`;
+                btn.innerText = `${g}年生`;
+                btn.onclick = () => switchGrade(g);
+                container.appendChild(btn);
+            }
+        }
+
+        function renderLevelGrid() {
+            const grid = document.getElementById('stages-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const grade = currentGrade;
+            const maxLevels = GRADE_LEVEL_COUNTS[grade] || 10;
+            const unlocked = gameState.unlockedLevels[grade] || [1];
+            const cleared = gameState.clearedRanks[grade] || {};
+
+            for (let lvl = 1; lvl <= maxLevels; lvl++) {
+                const isUnlocked = unlocked.includes(lvl);
+                const rank = cleared[lvl];
+
+                const btn = document.createElement('button');
+                btn.disabled = !isUnlocked;
+
+                let bgStyle = "bg-slate-100 border-slate-200 text-slate-400 opacity-60";
+                let badgeHtml = "";
+
+                if (isUnlocked) {
+                    if (rank === 'gold') {
+                        bgStyle = "bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 text-slate-900 border-amber-200 gold-glow btn-3d";
+                        badgeHtml = `<span class="text-xs font-bold">🥇 かんぺき</span>`;
+                    } else if (rank === 'silver') {
+                        bgStyle = "bg-gradient-to-br from-slate-200 via-slate-100 to-slate-300 text-slate-800 border-slate-200 btn-3d shadow-sm";
+                        badgeHtml = `<span class="text-xs font-bold">🥈 1ミス</span>`;
+                    } else if (rank === 'bronze') {
+                        bgStyle = "bg-gradient-to-br from-amber-700 via-amber-600 to-amber-800 text-amber-100 border-amber-500 btn-3d shadow-sm";
+                        badgeHtml = `<span class="text-xs font-bold">🥉 2ミス</span>`;
+                    } else {
+                        bgStyle = "bg-gradient-to-br from-indigo-500 to-blue-600 hover:from-indigo-400 hover:to-blue-500 text-white border-indigo-300 btn-3d shadow-md";
+                        badgeHtml = `<span class="text-[10px] text-indigo-100 font-bold">レベル ${lvl}</span>`;
+                    }
+                }
+
+                btn.className = `p-3 rounded-2xl border-2 flex flex-col items-center justify-center font-black transition-all ${bgStyle}`;
+                btn.innerHTML = `
+                    <span class="text-xl sm:text-2xl">Lv. ${lvl}</span>
+                    ${isUnlocked ? badgeHtml : '<i data-lucide="lock" class="w-4 h-4 text-slate-400 mt-1"></i>'}
+                `;
+
+                if (isUnlocked) {
+                    btn.onclick = () => startLevel(grade, lvl);
+                }
+
+                grid.appendChild(btn);
+            }
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function showGradeSelect() {
+            stopBGM();
+            hideAllScreens();
+            document.getElementById('stage-select-screen').classList.remove('hidden');
+            renderGradeTabs();
+            renderLevelGrid();
+        }
+
+        function hideAllScreens() {
+            ['stage-select-screen', 'game-screen', 'clear-screen', 'album-screen', 'gameover-modal'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+        }
+
+        function startLevel(grade, level) {
+            currentGrade = grade;
+            currentLevel = level;
+            gameState.currentGrade = grade;
+            gameState.currentLevel = level;
+            gameState.lives = 3;
+            gameState.currentQuestionIndex = 0;
+            gameState.questions = generateKanjiQuestions(grade, level);
+
+            hideAllScreens();
+            document.getElementById('game-screen').classList.remove('hidden');
+
+            document.getElementById('current-stage-title').innerText = `${grade}年生 レベル${level}`;
+
+            // バトルエリア表示の復元
+            const targetBox = document.getElementById('target-pokemon-scale-box');
+            if (targetBox) targetBox.classList.remove('opacity-0', 'scale-0');
+
+            const ballAnim = document.getElementById('pokeball-anim');
+            if (ballAnim) ballAnim.className = "hidden absolute left-8 top-4 z-50 pointer-events-none";
+
+            const stars = document.getElementById('capture-stars');
+            if (stars) stars.classList.add('hidden');
+
+            updateHeartsUI();
+            renderMonsterSvg();
+            showQuestion();
+            startBGM();
+        }
+
+        function updateHeartsUI() {
+            const container = document.getElementById('hearts-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            for (let i = 0; i < 3; i++) {
+                const heart = document.createElement('i');
+                heart.setAttribute('data-lucide', 'heart');
+                if (i < gameState.lives) {
+                    heart.className = "w-6 h-6 text-red-500 fill-red-500";
+                } else {
+                    heart.className = "w-6 h-6 text-slate-300 fill-slate-200 opacity-60";
+                }
+                container.appendChild(heart);
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderMonsterSvg() {
+            const box = document.getElementById('pixel-monster-svg-box');
+            if (!box) return;
+
+            // 怪獣のドット絵SVGを生成・表示（トレーナーと向かい合う左向きドラゴン風モンスター）
+            box.innerHTML = `
+                <svg class="w-16 h-16 pixelated drop-shadow-xl" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="14" y="2" width="2" height="4" fill="#f59e0b"/>
+                    <rect x="18" y="4" width="2" height="3" fill="#d97706"/>
+                    <rect x="10" y="5" width="12" height="8" fill="#10b981"/>
+                    <rect x="8" y="7" width="14" height="6" fill="#10b981"/>
+                    <rect x="11" y="8" width="3" height="3" fill="#ffffff"/>
+                    <rect x="11" y="9" width="2" height="2" fill="#0f172a"/>
+                    <rect x="12" y="9" width="1" height="1" fill="#ffffff"/>
+                    <rect x="7" y="11" width="5" height="3" fill="#047857"/>
+                    <rect x="7" y="12" width="2" height="1" fill="#ffffff"/>
+                    <rect x="14" y="11" width="3" height="2" fill="#f43f5e"/>
+                    <rect x="10" y="13" width="12" height="12" fill="#10b981"/>
+                    <rect x="8" y="15" width="15" height="8" fill="#10b981"/>
+                    <rect x="11" y="14" width="6" height="9" fill="#fef08a"/>
+                    <rect x="12" y="15" width="5" height="7" fill="#fde047"/>
+                    <rect x="22" y="10" width="3" height="3" fill="#f59e0b"/>
+                    <rect x="23" y="15" width="3" height="3" fill="#f59e0b"/>
+                    <rect x="24" y="20" width="3" height="3" fill="#f59e0b"/>
+                    <rect x="22" y="21" width="6" height="4" fill="#10b981"/>
+                    <rect x="26" y="19" width="4" height="4" fill="#10b981"/>
+                    <rect x="28" y="17" width="3" height="3" fill="#f59e0b"/>
+                    <rect x="8" y="16" width="4" height="3" fill="#047857"/>
+                    <rect x="9" y="25" width="5" height="5" fill="#047857"/>
+                    <rect x="17" y="25" width="5" height="5" fill="#047857"/>
+                    <rect x="7" y="28" width="7" height="2" fill="#065f46"/>
+                    <rect x="15" y="28" width="7" height="2" fill="#065f46"/>
+                </svg>
+            `;
+
+            const progress = gameState.currentQuestionIndex / 10;
+            const scaleBox = document.getElementById('target-pokemon-scale-box');
+            if (scaleBox) {
+                // 初期状態（0問正解時）はトレーナーの1.8倍（scale 1.8）
+                // 正解して攻撃を受けるごとに徐々に小さくなり、10問達成でモンスターボールに入る演出へと移行
+                const scale = Math.max(0.2, 1.8 - (progress * 1.55));
+                scaleBox.style.transform = `scale(${scale})`;
+            }
+        }
+
+        // カタカナをひらがなに変換するヘルパー関数
+        function toHiragana(str) {
+            if (!str) return '';
+            return str.replace(/[\u30a1-\u30f6]/g, function(match) {
+                var chr = match.charCodeAt(0) - 0x60;
+                return String.fromCharCode(chr);
+            });
+        }
+
+        function showQuestion() {
+            isProcessingAnswer = false;
+            const q = gameState.questions[gameState.currentQuestionIndex];
+            if (!q) return;
+
+            document.getElementById('current-progress-tag').innerText = `${gameState.currentQuestionIndex + 1} / 10問`;
+            document.getElementById('question-prompt').innerText = `「${q.phrase}」の よみをえらぼう！`;
+
+            const phraseBox = document.getElementById('question-phrase-container');
+            phraseBox.innerText = q.phrase;
+
+            const optionsGrid = document.getElementById('options-grid');
+            optionsGrid.innerHTML = '';
+
+            q.options.forEach(ans => {
+                const btn = document.createElement('button');
+                btn.className = "py-3 px-4 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 text-white text-xl sm:text-2xl font-black shadow-md btn-3d border-2 border-white flex items-center justify-center transition-transform hover:scale-102";
+                // ひらがな変換を通して表示
+                btn.innerText = toHiragana(ans);
+                btn.onclick = () => checkAnswer(ans, btn);
+                optionsGrid.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedAns, btn) {
+            if (isProcessingAnswer) return;
+            const q = gameState.questions[gameState.currentQuestionIndex];
+            if (!q) return;
+
+            if (selectedAns === q.answer) {
+                isProcessingAnswer = true;
+                playPinpon();
+
+                btn.classList.remove('from-blue-500', 'to-indigo-600');
+                btn.classList.add('from-emerald-500', 'to-teal-600', 'scale-105');
+
+                const isFinalQuestion = (gameState.currentQuestionIndex + 1 >= 10);
+
+                if (!isFinalQuestion) {
+                    // 途中問題：ミサイル攻撃
+                    const missile = document.getElementById('missile-anim');
+                    if (missile) {
+                        missile.classList.remove('hidden');
+                        missile.classList.add('animate-fly-missile');
+                        setTimeout(() => {
+                            missile.classList.add('hidden');
+                            missile.classList.remove('animate-fly-missile');
+                            
+                            const hit = document.getElementById('hit-explosion');
+                            if (hit) {
+                                hit.classList.remove('hidden');
+                                setTimeout(() => hit.classList.add('hidden'), 350);
+                            }
+                        }, 400);
+                    }
+
+                    setTimeout(() => {
+                        gameState.currentQuestionIndex++;
+                        renderMonsterSvg();
+                        showQuestion();
+                    }, 1100);
+                } else {
+                    // 最終問題：モンスターボール捕獲アニメーション
+                    gameState.currentQuestionIndex++;
+
+                    const ballAnim = document.getElementById('pokeball-anim');
+                    const targetBox = document.getElementById('target-pokemon-scale-box');
+                    const stars = document.getElementById('capture-stars');
+
+                    setTimeout(() => {
+                        if (ballAnim) {
+                            ballAnim.classList.remove('hidden');
+                            ballAnim.classList.add('animate-throw-ball');
+                        }
+
+                        setTimeout(() => {
+                            if (targetBox) targetBox.classList.add('opacity-0', 'scale-0');
+                            const hit = document.getElementById('hit-explosion');
+                            if (hit) {
+                                hit.classList.remove('hidden');
+                                setTimeout(() => hit.classList.add('hidden'), 300);
+                            }
+                        }, 450);
+
+                        setTimeout(() => {
+                            if (ballAnim) {
+                                ballAnim.classList.remove('animate-throw-ball');
+                                ballAnim.classList.add('animate-ball-wiggle');
+                            }
+                        }, 750);
+
+                        setTimeout(() => {
+                            if (stars) stars.classList.remove('hidden');
+                        }, 2200);
+
+                        setTimeout(() => {
+                            handleLevelClear();
+                        }, 2800);
+
+                    }, 400);
+                }
+
+            } else {
+                playBuzzer();
+                btn.classList.add('animate-shake', 'from-rose-500', 'to-red-600');
+                setTimeout(() => btn.classList.remove('animate-shake'), 400);
+
+                gameState.lives--;
+                updateHeartsUI();
+
+                if (gameState.lives <= 0) {
+                    stopBGM();
+                    document.getElementById('gameover-modal').classList.remove('hidden');
+                }
+            }
+        }
+
+        function handleLevelClear() {
+            stopBGM();
+
+            const grade = currentGrade;
+            const level = currentLevel;
+
+            let rank = 'bronze';
+            if (gameState.lives === 3) rank = 'gold';
+            else if (gameState.lives === 2) rank = 'silver';
+
+            const isAlreadyCleared = !!(gameState.clearedRanks[grade] && gameState.clearedRanks[grade][level]);
+
+            const currentRank = gameState.clearedRanks[grade][level];
+            const rankWeight = { gold: 3, silver: 2, bronze: 1 };
+            if (!currentRank || rankWeight[rank] > (rankWeight[currentRank] || 0)) {
+                gameState.clearedRanks[grade][level] = rank;
+            }
+
+            // 次のレベルのアンロック
+            const maxLevels = GRADE_LEVEL_COUNTS[grade] || 10;
+            if (level < maxLevels) {
+                const nextLvl = level + 1;
+                if (!gameState.unlockedLevels[grade].includes(nextLvl)) {
+                    gameState.unlockedLevels[grade].push(nextLvl);
+                }
+            }
+
+            const prevOwnedCount = gameState.ownedCards.length;
+            const prevPhase1Cleared = isFirstPhaseComplete();
+
+            // カード獲得
+            const newCard = getRandomPokemonCard(rank, level, grade, isAlreadyCleared);
+            if (newCard) {
+                if (!gameState.ownedCards.includes(newCard.id)) {
+                    gameState.ownedCards.push(newCard.id);
+                    if (!gameState.newCards.includes(newCard.id)) {
+                        gameState.newCards.push(newCard.id);
+                    }
+                } else {
+                    const idx = gameState.newCards.indexOf(newCard.id);
+                    if (idx !== -1) gameState.newCards.splice(idx, 1);
+                }
+            }
+
+            saveData();
+
+            const currentOwnedCount = gameState.ownedCards.length;
+            const currentPhase1Cleared = isFirstPhaseComplete();
+
+            const clearBadge = document.getElementById('clear-badge');
+            if (rank === 'gold') {
+                clearBadge.innerText = '🥇 PERFECT GOLD!';
+                clearBadge.className = 'inline-block px-4 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-900 shadow gold-glow';
+            } else if (rank === 'silver') {
+                clearBadge.innerText = '🥈 SILVER CLEAR';
+                clearBadge.className = 'inline-block px-4 py-1 rounded-full text-xs font-black bg-slate-200 text-slate-800 shadow';
+            } else {
+                clearBadge.innerText = '🥉 BRONZE CLEAR';
+                clearBadge.className = 'inline-block px-4 py-1 rounded-full text-xs font-black bg-amber-700 text-white shadow';
+            }
+
+            document.getElementById('clear-title').innerText = `${grade}年生 レベル${level} クリア！`;
+
+            const banner = document.getElementById('world-clear-banner');
+            const reached40 = !prevPhase1Cleared && currentPhase1Cleared;
+            const reached60 = (prevOwnedCount < 60) && (currentOwnedCount === 60);
+
+            if (reached60) {
+                banner.innerText = '👑 カード図鑑 60種コンプリート達成！！ 👑';
+                banner.classList.remove('hidden');
+                launchCelebration(true, true);
+                playCompleteFanfare();
+            } else if (reached40) {
+                banner.innerText = '✨ RRまで40種コンプリート！AR〜MUR解禁！！ ✨';
+                banner.classList.remove('hidden');
+                launchCelebration(false, true);
+                playFanfare(true);
+            } else {
+                banner.classList.add('hidden');
+                playFanfare(false);
+            }
+
+            const cardBox = document.getElementById('reward-card-container');
+            if (cardBox && newCard) {
+                cardBox.innerHTML = createCardHtml(newCard);
+            }
+
+            hideAllScreens();
+            document.getElementById('clear-screen').classList.remove('hidden');
+        }
+
+        function getRandomPokemonCard(rank, level, grade, isAlreadyCleared) {
+            const isPhase1Done = isFirstPhaseComplete();
+            let baseCards = POKEMON_CARDS;
+            if (!isPhase1Done) {
+                baseCards = POKEMON_CARDS.filter(c => ['C', 'U', 'R', 'RR'].includes(c.rarity));
+            }
+
+            const unownedCards = baseCards.filter(c => !gameState.ownedCards.includes(c.id));
+            const isCComplete = POKEMON_CARDS.filter(c => c.rarity === 'C').every(c => gameState.ownedCards.includes(c.id));
+
+            if (isPhase1Done && unownedCards.length > 0) {
+                if (level >= 10 && Math.random() < 0.90) {
+                    return pickWeightedCard(unownedCards);
+                } else if (Math.random() < 0.50) {
+                    return pickWeightedCard(unownedCards);
+                }
+            } else if (!isPhase1Done && isAlreadyCleared && gameState.ownedCards.length > 0) {
+                if (Math.random() < 0.85) {
+                    const ownedPool = baseCards.filter(c => gameState.ownedCards.includes(c.id));
+                    if (ownedPool.length > 0) return pickWeightedCard(ownedPool);
+                }
+            }
+
+            let allowedRarities = ['C', 'U'];
+            if (level >= 3 && level <= 6) allowedRarities = ['C', 'U', 'R'];
+            else if (level >= 7 && level <= 12) allowedRarities = ['C', 'U', 'R', 'RR'];
+            else if (level >= 13) allowedRarities = ['C', 'U', 'R', 'RR', 'AR', 'SR', 'SAR', 'UR', 'MUR'];
+
+            if (!isPhase1Done) {
+                allowedRarities = allowedRarities.filter(r => ['C', 'U', 'R', 'RR'].includes(r));
+            }
+
+            if (!isCComplete && allowedRarities.includes('C') && Math.random() < 0.80) {
+                allowedRarities = ['C'];
+            }
+
+            let targetPool = baseCards.filter(c => allowedRarities.includes(c.rarity));
+            const unownedInPool = targetPool.filter(c => !gameState.ownedCards.includes(c.id));
+            const finalPool = (unownedInPool.length > 0) ? unownedInPool : targetPool;
+
+            return pickWeightedCard(finalPool.length > 0 ? finalPool : baseCards);
+        }
+
+        function handleNextStep() {
+            const maxLevels = GRADE_LEVEL_COUNTS[currentGrade] || 10;
+            if (currentLevel < maxLevels) {
+                startLevel(currentGrade, currentLevel + 1);
+            } else {
+                showGradeSelect();
+            }
+        }
+
+        function retryCurrentStage() {
+            startLevel(currentGrade, currentLevel);
+        }
+
+        function createCardHtml(card, isModal = false) {
+            const isNew = gameState.newCards.includes(card.id);
+            const scaleClass = isModal ? '' : 'w-48 h-72';
+
+            const rarityBadgeMap = {
+                'C': '● C', 'U': '◆ U', 'R': '★ R', 'RR': '★★ RR',
+                'AR': '🎨 AR', 'SR': '輝 SR', 'SAR': '✨ SAR', 'UR': '🏆 UR', 'MUR': '👑 MUR'
+            };
+            const rarityBadge = rarityBadgeMap[card.rarity] || card.rarity;
+
+            // C, U, R, RR はホログラムなし。AR, SR, SAR, UR, MUR のみホログラム対象
+            const isFoilRarity = ['AR', 'SR', 'SAR', 'UR', 'MUR'].includes(card.rarity);
+            let extraEffectClass = isFoilRarity ? 'card-foil' : '';
+            let borderStyle = 'border-amber-300/80';
+
+            if (card.rarity === 'MUR') {
+                extraEffectClass = 'card-foil animate-rainbow-glow';
+                borderStyle = 'border-yellow-200';
+            } else if (card.rarity === 'UR') {
+                extraEffectClass = 'card-foil';
+                borderStyle = 'border-yellow-400 gold-glow';
+            } else if (card.rarity === 'SAR' || card.rarity === 'SR') {
+                extraEffectClass = 'card-foil';
+                borderStyle = 'border-pink-300 super-glow';
+            }
+
+            // モーダル表示時はカード名称を省略（truncate）せずに全文表示
+            const nameClass = isModal 
+                ? 'text-xs sm:text-sm tracking-wide text-amber-200 drop-shadow-md leading-tight break-words font-black max-w-[140px]' 
+                : 'text-sm sm:text-base tracking-wide truncate max-w-[110px] drop-shadow-md text-amber-200';
+
+            // 明るいキャラクターの判定（ポッチャマとカイオーガは背景を明るくするため対象外）
+            const brightNames = ['ピカチュウ', 'ライチュウ', 'サンダー', 'ミライドン', 'パモ', 'デデンネ', 'アルセウス', 'ルギア', 'ミュウ', 'ピチュー', 'プリン', 'トゲピー', 'ピッピ', 'コダック', 'イーブイ', 'ニャース', 'ポッポ'];
+            let isBrightChar = brightNames.some(b => card.name.includes(b));
+            if (card.name.includes('ポッチャマ') || card.name.includes('カイオーガ')) {
+                isBrightChar = false;
+            }
+
+            // 暗いキャラ（＋ポッチャマ・カイオーガ）は背景を明るくスポットライト化
+            // 背景を暗いままにしたカードも、枠線は白に近い色（border-white/80）に調整
+            const illusBgClass = isBrightChar 
+                ? 'bg-slate-900/60 border-white/80 shadow-sm' 
+                : 'bg-white/25 border-white/40 shadow-md';
+
+            const glowClass = isBrightChar
+                ? 'from-white/30 via-slate-800/20 to-transparent'
+                : 'from-white/70 via-white/30 to-transparent';
+
+            return `
+                <div class="relative ${scaleClass} rounded-2xl p-2.5 bg-gradient-to-b ${card.bgTone} border-4 ${borderStyle} shadow-2xl flex flex-col justify-between ${extraEffectClass} text-white overflow-hidden select-none">
+                    
+                    ${isNew ? `
+                        <div class="absolute top-1 right-1 z-50 bg-gradient-to-r from-red-500 to-pink-500 text-white font-black text-[10px] px-2.5 py-0.5 rounded-full border-2 border-white shadow-xl animate-bounce">
+                            NEW!
+                        </div>
+                    ` : ''}
+
+                    <div class="flex justify-between items-center z-10 font-black border-b border-white/20 pb-1">
+                        <span class="${nameClass}">${card.name}</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full ${card.typeBg} font-bold shadow-sm shrink-0">HP ${card.hp}</span>
+                    </div>
+
+                    <div class="my-1.5 h-28 sm:h-32 rounded-xl ${illusBgClass} border flex items-center justify-center relative overflow-hidden shadow-inner">
+                        <div class="absolute inset-0 opacity-50 bg-[radial-gradient(circle,_var(--tw-gradient-stops))] ${glowClass}"></div>
+                        ${getPokemonSvgIllustration(card)}
+                    </div>
+
+                    <div class="bg-slate-950/70 rounded-xl p-1.5 border border-white/10 z-10 space-y-1">
+                        <div class="flex justify-between items-center text-xs font-bold">
+                            <span class="text-amber-300 flex items-center gap-1">
+                                <span>${card.cost}</span>
+                                <span>${card.attack}</span>
+                            </span>
+                            <span class="text-sm font-black text-rose-400">${card.damage}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center z-10 text-[10px] text-amber-200/80 pt-1 font-bold">
+                        <span>${rarityBadge}</span>
+                        <span class="uppercase tracking-widest text-amber-400">${card.rarity}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getPokemonSvgIllustration(card) {
+            const accent = card.accentColor || '#f59e0b';
+            const scale = card.scale || 1.0;
+            const name = card.name || '';
+
+            // 1. 絵文字表示指定のあるカード
+            if (name === 'キャタピー') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐛</div>`;
+            }
+            if (name === 'コラッタ') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐀</div>`;
+            }
+            if (name === 'ポッポ') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐦</div>`;
+            }
+            if (name === 'ニャース') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐱</div>`;
+            }
+            if (name === 'コダック') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐥</div>`;
+            }
+            if (name === 'パモ') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐹</div>`;
+            }
+            if (name.includes('モクロー')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F989;</div>`;
+            }
+            if (name.includes('イーブイ')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F436;</div>`;
+            }
+            if (name === 'トゲピー') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐣</div>`;
+            }
+            if (name === 'フシギダネ') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🧄</div>`;
+            }
+            if (name.includes('ゼニガメ') || name.includes('カメックス')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐢</div>`;
+            }
+            if (name.includes('ポッチャマ')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F427;</div>`;
+            }
+            if (name === 'シャワーズ') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🦭</div>`;
+            }
+            if (name === 'プリン') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐽</div>`;
+            }
+            if (name === 'ケーシィ') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🦊</div>`;
+            }
+            if (name === 'ピッピ') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐖</div>`;
+            }
+            if (name === 'メノクラゲ') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🪼</div>`;
+            }
+            if (name === 'ギャラドス') {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">🐉</div>`;
+            }
+            if (name.includes('ラプラス')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F40B;</div>`;
+            }
+            if (name.includes('ガーディ')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F42F;</div>`;
+            }
+            if (name.includes('ストライク')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F997;</div>`;
+            }
+            if (name.includes('エレブー')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F405;</div>`;
+            }
+            if (name.includes('ゲッコウガ')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F9E3;</div>`;
+            }
+            if (name.includes('サーナイト')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F9DA;</div>`;
+            }
+            if (name.includes('ゲンガー')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F608;</div>`;
+            }
+            if (name.includes('ルカリオ')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F98A;</div>`;
+            }
+            if (name.includes('カビゴン')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F99B;</div>`;
+            }
+            if (name.includes('デデンネ')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F439;</div>`;
+            }
+            if (name.includes('レックウザ') || name.includes('レックーザ')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F432;</div>`;
+            }
+            if (name.includes('ナンジャモ')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F469;</div>`;
+            }
+            if (name.includes('カイリュー')) {
+                return `<div class="w-full h-full flex items-center justify-center text-5xl sm:text-6xl drop-shadow-lg select-none">&#x1F42A;</div>`;
+            }
+
+            // 2. 絵文字非対象カード用の本格的・高品質SVGイラスト描画
+            let svgContent = '';
+
+            if (name.includes('ピチュー') || name.includes('ピカチュウ') || name.includes('ライチュウ')) {
+                // ピカチュウ系: 長い耳、赤いほっぺ、稲妻尾
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <polygon points="6,2 11,10 4,14" fill="#000000"/>
+                        <polygon points="26,2 21,10 28,14" fill="#000000"/>
+                        <ellipse cx="7" cy="8" rx="3" ry="6" fill="#facc15" transform="rotate(-20 7 8)"/>
+                        <ellipse cx="25" cy="8" rx="3" ry="6" fill="#facc15" transform="rotate(20 25 8)"/>
+                        <circle cx="16" cy="18" r="10" fill="#facc15"/>
+                        <circle cx="12" cy="16" r="1.5" fill="#000000"/>
+                        <circle cx="20" cy="16" r="1.5" fill="#000000"/>
+                        <circle cx="9" cy="20" r="2.5" fill="#ef4444"/>
+                        <circle cx="23" cy="20" r="2.5" fill="#ef4444"/>
+                        <path d="M14 21 Q16 23 18 21" stroke="#000000" stroke-width="1.5" fill="none"/>
+                        <polygon points="24,24 28,16 26,28 31,22" fill="#eab308" stroke="#000" stroke-width="0.5"/>
+                    </g>
+                `;
+            } else if (name.includes('リザードン') || name.includes('ヒトカゲ')) {
+                // リザードン/ヒトカゲ: オレンジの竜、エメラルドの翼、炎の吐息
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <path d="M4 14 C1 6 12 4 12 14 Z" fill="#065f46" stroke="#ea580c" stroke-width="1"/>
+                        <path d="M28 14 C31 6 20 4 20 14 Z" fill="#065f46" stroke="#ea580c" stroke-width="1"/>
+                        <path d="M10 26 C10 16 22 16 22 26 Z" fill="#ea580c"/>
+                        <ellipse cx="16" cy="22" rx="4" ry="5" fill="#fef08a"/>
+                        <path d="M11 12 Q16 6 21 12 Q16 16 11 12 Z" fill="#ea580c"/>
+                        <circle cx="14" cy="11" r="1" fill="#000"/>
+                        <circle cx="18" cy="11" r="1" fill="#000"/>
+                        <polygon points="16,2 18,7 14,7" fill="#ef4444"/>
+                        <polygon points="16,0 19,5 13,5" fill="#f59e0b"/>
+                    </g>
+                `;
+            } else if (name.includes('フシギバナ')) {
+                // フシギバナ: 桃色の大きな花と葉
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <circle cx="16" cy="8" r="7" fill="#ec4899"/>
+                        <circle cx="16" cy="8" r="3" fill="#facc15"/>
+                        <path d="M4 16 C8 10 12 14 16 12" stroke="#15803d" stroke-width="4" fill="none"/>
+                        <path d="M28 16 C24 10 20 14 16 12" stroke="#15803d" stroke-width="4" fill="none"/>
+                        <rect x="8" y="16" width="16" height="12" rx="6" fill="#0d9488"/>
+                        <circle cx="12" cy="20" r="1.5" fill="#ef4444"/>
+                        <circle cx="20" cy="20" r="1.5" fill="#ef4444"/>
+                    </g>
+                `;
+            } else if (name.includes('ミュウツー') || name.includes('ミュウ')) {
+                // ミュウツー/ミュウ: サイコオーラとオーブ
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <circle cx="16" cy="16" r="13" fill="none" stroke="#a855f7" stroke-width="2" stroke-dasharray="4 2"/>
+                        <path d="M12 28 Q4 20 12 12 Q20 16 20 28 Z" fill="#a855f7" opacity="0.8"/>
+                        <circle cx="16" cy="12" r="6" fill="#e9d5ff"/>
+                        <circle cx="14" cy="11" r="1" fill="#38bdf8"/>
+                        <circle cx="18" cy="11" r="1" fill="#38bdf8"/>
+                        <circle cx="24" cy="10" r="4" fill="#38bdf8" opacity="0.9"/>
+                    </g>
+                `;
+            } else if (name.includes('サンダース')) {
+                // サンダース: 針々しい黄色い体と白い襟巻き
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <polygon points="16,2 20,8 26,4 22,12 30,12 22,16 28,24 18,20 16,30 14,20 4,24 10,16 2,12 10,12 6,4 12,8" fill="#facc15"/>
+                        <circle cx="16" cy="16" r="6" fill="#ffffff"/>
+                        <circle cx="14" cy="15" r="1.5" fill="#000"/>
+                        <circle cx="18" cy="15" r="1.5" fill="#000"/>
+                    </g>
+                `;
+            } else if (name.includes('ブースター')) {
+                // ブースター: ふわふわの赤い狐と炎
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <path d="M6 10 C6 2 26 2 26 10 Z" fill="#ea580c"/>
+                        <ellipse cx="16" cy="18" rx="10" ry="8" fill="#fef08a"/>
+                        <circle cx="16" cy="14" r="5" fill="#ea580c"/>
+                        <circle cx="14" cy="13" r="1" fill="#000"/>
+                        <circle cx="18" cy="13" r="1" fill="#000"/>
+                        <path d="M16 2 L19 7 L13 7 Z" fill="#fef08a"/>
+                    </g>
+                `;
+            } else if (name.includes('ロコン')) {
+                // ロコン: 6本尾の狐
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <circle cx="16" cy="16" r="8" fill="#ea580c"/>
+                        <circle cx="12" cy="8" r="3" fill="#fef08a"/>
+                        <circle cx="16" cy="6" r="3" fill="#fef08a"/>
+                        <circle cx="20" cy="8" r="3" fill="#fef08a"/>
+                        <path d="M8 24 Q4 18 10 20 M12 26 Q8 20 14 22 M24 24 Q28 18 22 20" stroke="#f97316" stroke-width="3" fill="none"/>
+                    </g>
+                `;
+            } else if (name.includes('パルシェン')) {
+                // パルシェン: 紫のトゲトゲ貝
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <polygon points="16,2 20,8 28,6 24,14 30,22 20,22 16,30 12,22 2,22 8,14 4,6 12,8" fill="#3b0764"/>
+                        <circle cx="16" cy="16" r="7" fill="#000000"/>
+                        <circle cx="13" cy="15" r="1.5" fill="#ffffff"/>
+                        <circle cx="19" cy="15" r="1.5" fill="#ffffff"/>
+                        <polygon points="16,8 18,12 14,12" fill="#ffffff"/>
+                    </g>
+                `;
+            } else if (name.includes('フリーザー')) {
+                // フリーザー: 伝説の氷の鳥
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <path d="M2 14 Q16 4 30 14 Q16 20 2 14 Z" fill="#38bdf8"/>
+                        <circle cx="16" cy="14" r="5" fill="#0284c7"/>
+                        <polygon points="14,4 16,0 18,4" fill="#e0f2fe"/>
+                        <path d="M16 19 C10 28 22 28 16 32" stroke="#e0f2fe" stroke-width="2" fill="none"/>
+                    </g>
+                `;
+            } else if (name.includes('サンダー')) {
+                // サンダー: 伝説の雷の鳥
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <polygon points="16,2 19,10 28,4 22,14 30,12 22,20 26,30 16,22 6,30 10,20 2,12 10,14 4,4 13,10" fill="#facc15"/>
+                        <polygon points="16,6 18,12 14,12" fill="#000000"/>
+                        <circle cx="16" cy="16" r="4" fill="#eab308"/>
+                    </g>
+                `;
+            } else if (name.includes('ファイヤー')) {
+                // ファイヤー: 伝説の火の鳥
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <path d="M2 18 C8 4 24 4 30 18 C20 12 12 12 2 18 Z" fill="#ef4444"/>
+                        <path d="M6 16 C10 8 22 8 26 16 C20 14 12 14 6 16 Z" fill="#f97316"/>
+                        <circle cx="16" cy="14" r="4" fill="#facc15"/>
+                        <path d="M14 6 L16 1 L18 6 Z" fill="#ef4444"/>
+                    </g>
+                `;
+            } else if (name.includes('ハッサム')) {
+                // ハッサム: 赤い鋼ハサミ
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <rect x="10" y="8" width="12" height="16" rx="6" fill="#dc2626"/>
+                        <circle cx="6" cy="14" r="4" fill="#991b1b" stroke="#facc15" stroke-width="1"/>
+                        <circle cx="26" cy="14" r="4" fill="#991b1b" stroke="#facc15" stroke-width="1"/>
+                        <circle cx="14" cy="12" r="1.5" fill="#facc15"/>
+                        <circle cx="18" cy="12" r="1.5" fill="#facc15"/>
+                    </g>
+                `;
+            } else if (name.includes('アルセウス')) {
+                // アルセウス: 創世の神の輪
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <circle cx="16" cy="16" r="11" fill="none" stroke="#fde047" stroke-width="3"/>
+                        <polygon points="16,2 20,12 30,12 22,18 25,28 16,22 7,28 10,18 2,12 12,12" fill="#ffffff" opacity="0.9"/>
+                        <circle cx="16" cy="16" r="4" fill="#eab308"/>
+                        <circle cx="16" cy="16" r="2" fill="#10b981"/>
+                    </g>
+                `;
+            } else if (name.includes('ミライドン')) {
+                // ミライドン: 未来のサイバー雷竜
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <circle cx="16" cy="16" r="12" fill="none" stroke="#06b6d4" stroke-width="2"/>
+                        <path d="M10 24 C10 10 22 10 22 24 Z" fill="#8b5cf6"/>
+                        <circle cx="16" cy="18" r="5" fill="#06b6d4"/>
+                        <polygon points="16,4 19,10 13,10" fill="#a855f7"/>
+                    </g>
+                `;
+            } else if (name.includes('コライドン')) {
+                // コライドン: 古代の赤き格闘竜
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <circle cx="16" cy="16" r="10" fill="#e11d48"/>
+                        <path d="M6 10 L16 2 L26 10 Z" fill="#38bdf8"/>
+                        <circle cx="16" cy="16" r="5" fill="#ffffff"/>
+                        <circle cx="16" cy="16" r="3" fill="#1e293b"/>
+                    </g>
+                `;
+            } else if (name.includes('ギラティナ')) {
+                // ギラティナ: 異次元の翼と黄金の爪
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <path d="M2 8 Q16 20 30 8 M2 24 Q16 12 30 24" stroke="#dc2626" stroke-width="4" fill="none"/>
+                        <circle cx="16" cy="16" r="8" fill="#64748b"/>
+                        <path d="M12 8 L16 2 L20 8 Z" fill="#f59e0b"/>
+                        <circle cx="14" cy="15" r="1.5" fill="#ef4444"/>
+                        <circle cx="18" cy="15" r="1.5" fill="#ef4444"/>
+                    </g>
+                `;
+            } else if (name.includes('ルギア')) {
+                // ルギア: 白き海神
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <path d="M2 16 Q16 2 30 16 Q16 26 2 16 Z" fill="#f8fafc"/>
+                        <path d="M10 14 Q16 10 22 14" stroke="#1e40af" stroke-width="3" fill="none"/>
+                        <circle cx="16" cy="14" r="2" fill="#1e40af"/>
+                    </g>
+                `;
+            } else if (name.includes('カイオーガ')) {
+                // カイオーガ: 紺碧の巨大海獣
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <ellipse cx="16" cy="16" rx="14" ry="9" fill="#1e3a8a"/>
+                        <path d="M6 16 L26 16" stroke="#ef4444" stroke-width="2"/>
+                        <circle cx="10" cy="13" r="1.5" fill="#ffffff"/>
+                        <circle cx="22" cy="13" r="1.5" fill="#ffffff"/>
+                    </g>
+                `;
+            } else {
+                // 汎用バックアップSVG
+                svgContent = `
+                    <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.5))">
+                        <circle cx="16" cy="16" r="10" fill="${accent}"/>
+                        <polygon points="16,4 19,12 28,12 21,17 24,25 16,20 8,25 11,17 4,12 13,12" fill="#ffffff" opacity="0.6"/>
+                    </g>
+                `;
+            }
+
+            return `
+                <svg class="w-20 h-20" viewBox="0 0 32 32" style="transform: scale(${scale});">
+                    ${svgContent}
+                </svg>
+            `;
+        }
+
+        // --- アルバム（カード図鑑）機能 ---
+
+        function renderAlbumFilters() {
+            const filterBar = document.getElementById('album-filter-bar');
+            if (!filterBar) return;
+
+            const filters = ['ALL', ...RARITY_ORDER];
+            filterBar.innerHTML = '';
+
+            filters.forEach(rarity => {
+                const btn = document.createElement('button');
+                let count = 0;
+                let totalInRarity = 0;
+
+                if (rarity === 'ALL') {
+                    count = gameState.ownedCards.length;
+                    totalInRarity = POKEMON_CARDS.length;
+                } else {
+                    count = POKEMON_CARDS.filter(c => c.rarity === rarity && gameState.ownedCards.includes(c.id)).length;
+                    totalInRarity = POKEMON_CARDS.filter(c => c.rarity === rarity).length;
+                }
+
+                const isActive = currentAlbumFilter === rarity;
+
+                btn.className = `px-3 py-1 rounded-full text-xs font-black whitespace-nowrap transition-all ${
+                    isActive 
+                        ? 'bg-amber-400 text-slate-900 border-2 border-white shadow' 
+                        : 'bg-white text-slate-600 hover:bg-slate-100 border border-indigo-100'
+                }`;
+                btn.innerText = `${rarity} (${count}/${totalInRarity})`;
+                btn.onclick = () => {
+                    currentAlbumFilter = rarity;
+                    renderAlbumFilters();
+                    renderAlbumGrid();
+                };
+                filterBar.appendChild(btn);
+            });
+        }
+
+        function showAlbum() {
+            stopBGM();
+            hideAllScreens();
+            document.getElementById('album-screen').classList.remove('hidden');
+            renderAlbumFilters();
+            renderAlbumGrid();
+        }
+
+        function createLockedCardHtml(card) {
+            return `
+                <div class="relative w-48 h-72 rounded-2xl p-2.5 bg-slate-900/80 border-4 border-slate-700 shadow-xl flex flex-col justify-between items-center text-slate-400 select-none opacity-85 backdrop-blur-sm">
+                    <div class="flex justify-between items-center w-full z-10 border-b border-slate-800 pb-1 font-bold text-xs">
+                        <span class="text-slate-500">???</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-500 border border-slate-700">No.${card.id.replace('p', '')}</span>
+                    </div>
+                    <div class="my-auto flex flex-col items-center justify-center space-y-2">
+                        <div class="w-16 h-16 rounded-full bg-slate-800/90 border-2 border-slate-700 flex items-center justify-center text-slate-500 shadow-inner">
+                            <i data-lucide="lock" class="w-8 h-8"></i>
+                        </div>
+                        <span class="text-xs font-black tracking-widest text-slate-500">???</span>
+                    </div>
+                    <div class="flex justify-between items-center w-full z-10 text-[10px] text-slate-500 font-bold pt-1 border-t border-slate-800">
+                        <span class="uppercase tracking-wider">${card.rarity}</span>
+                        <span>未獲得</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAlbumGrid() {
+            const grid = document.getElementById('album-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            let filteredCards = POKEMON_CARDS;
+            if (currentAlbumFilter !== 'ALL') {
+                filteredCards = POKEMON_CARDS.filter(c => c.rarity === currentAlbumFilter);
+            }
+
+            filteredCards.forEach(card => {
+                const isOwned = gameState.ownedCards.includes(card.id);
+                const wrapper = document.createElement('div');
+
+                if (isOwned) {
+                    wrapper.className = "flex justify-center items-center cursor-pointer transform hover:scale-105 transition-transform duration-200";
+                    wrapper.innerHTML = createCardHtml(card);
+                    wrapper.onclick = () => showCardModal(card);
+                } else {
+                    wrapper.className = "flex justify-center items-center cursor-pointer transform hover:scale-102 transition-transform duration-200";
+                    wrapper.innerHTML = createLockedCardHtml(card);
+                    wrapper.onclick = () => showToast('漢字クイズをクリアして カードをゲットしよう！');
+                }
+                
+                grid.appendChild(wrapper);
+            });
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function showCardModal(card) {
+            const container = document.getElementById('modal-card-container');
+            if (!container) return;
+            container.innerHTML = createCardHtml(card, true);
+
+            const newIndex = gameState.newCards.indexOf(card.id);
+            if (newIndex !== -1) {
+                gameState.newCards.splice(newIndex, 1);
+                saveData();
+                renderAlbumGrid();
+            }
+
+            document.getElementById('card-modal').classList.remove('hidden');
+        }
+
+        function closeCardModal() {
+            document.getElementById('card-modal').classList.add('hidden');
+        }
+
+        // --- お祝い演出（紙吹雪 & 連発花火） ---
+        let celebrationAnimId = null;
+
+        function launchCelebration(isComplete = false, isAllClear = false) {
+            const canvas = document.getElementById('celebration-canvas');
+            if (!canvas) return;
+            canvas.classList.remove('hidden');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const fireworks = [];
+            const particleCount = isComplete ? 200 : (isAllClear ? 150 : 80);
+            const colors = ['#f43f5e', '#ec4899', '#d946ef', '#a855f7', '#6366f1', '#3b82f6', '#06b6d4', '#10b981', '#84cc16', '#eab308', '#f97316'];
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vx: Math.random() * 2 - 1,
+                    vy: Math.random() * 3 + 2,
+                    rot: Math.random() * 360,
+                    vRot: Math.random() * 10 - 5
+                });
+            }
+
+            function createFirework() {
+                const fx = Math.random() * (canvas.width * 0.8) + canvas.width * 0.1;
+                const fy = Math.random() * (canvas.height * 0.5) + canvas.height * 0.1;
+                const count = Math.floor(Math.random() * 30) + 40;
+                const fwColor = colors[Math.floor(Math.random() * colors.length)];
+
+                for (let i = 0; i < count; i++) {
+                    const angle = (Math.PI * 2 / count) * i + Math.random() * 0.2;
+                    const speed = Math.random() * 5 + 3;
+                    fireworks.push({
+                        x: fx, y: fy,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        size: Math.random() * 3 + 2,
+                        color: fwColor, alpha: 1,
+                        decay: Math.random() * 0.02 + 0.015
+                    });
+                }
+            }
+
+            let fwTimer = 0;
+            const fwFrequency = isComplete ? 12 : 25;
+
+            if (celebrationAnimId) cancelAnimationFrame(celebrationAnimId);
+
+            function loop() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                fwTimer++;
+                if (fwTimer % fwFrequency === 0) createFirework();
+
+                for (let i = fireworks.length - 1; i >= 0; i--) {
+                    const fw = fireworks[i];
+                    fw.x += fw.vx;
+                    fw.y += fw.vy;
+                    fw.vy += 0.05;
+                    fw.alpha -= fw.decay;
+
+                    if (fw.alpha <= 0) {
+                        fireworks.splice(i, 1);
+                        continue;
+                    }
+
+                    ctx.save();
+                    ctx.globalAlpha = fw.alpha;
+                    ctx.fillStyle = fw.color;
+                    ctx.beginPath();
+                    ctx.arc(fw.x, fw.y, fw.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.rot += p.vRot;
+
+                    if (p.y > canvas.height) {
+                        p.y = -10;
+                        p.x = Math.random() * canvas.width;
+                    }
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rot * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                    ctx.restore();
+                });
+
+                celebrationAnimId = requestAnimationFrame(loop);
+            }
+
+            loop();
+
+            setTimeout(() => {
+                if (celebrationAnimId) cancelAnimationFrame(celebrationAnimId);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                canvas.classList.add('hidden');
+            }, isComplete ? 8000 : 5000);
+        }
+
+        // 初期化処理
+        window.onload = function() {
+            loadSaveData();
+            showGradeSelect();
+        };
+    </script>
+</body>
+</html>
